@@ -22,10 +22,24 @@
                 var grid = new Bonegrid.Grid({
                     el : $('#bonegrid'),
                     data : gridData,
+                    columns : [
+                        {
+                            id : 'name',
+                            name : 'Name',
+                            header : function(data) {
+                                return $('<th><strong>' + data.name + '</strong></th>');
+                            }
+                        },
+                        {
+                            id : 'published',
+                            name : 'Published'
+                        },
+                    ],
                     limit : 10
                 }); 
                 grid.render();
             }).call(this);
+
             //grid.show(
             /*
                 header : new Grid.Header({

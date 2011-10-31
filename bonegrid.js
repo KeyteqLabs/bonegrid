@@ -53,8 +53,30 @@ Bonegrid = {};
     });
 
     Bonegrid.Header = Backbone.View.extend({
+        grid : false,
+        columns : [],
+        initialize : function(options) {
+            options || (options = {});
+            _.bindAll(this, 'render', 'renderCol');
+
+            // Keep a reference back to Bonegrid.Grid
+            if ('grid' in options) this.grid = options.grid;
+
+            // And accept columns as well
+            if ('columns' in options) this.columns = options.columns;
+        },
         render : function() {
+            this.el = $(this.el);
+            var render;
+            _(this.columns).each(function(col) {
+                render = ('header' in col) ? col.header : this.renderCol;
+                this.el.append(render(col));
+            }, this);
             return this;
+        },
+
+        renderCol : function(data) {
+            return $('<th>' + data.name + '</th>');
         }
     });
 
@@ -64,10 +86,12 @@ Bonegrid = {};
             options || (options = {});
             _.bindAll(this, 'render', 'addRow');
 
+            // Keep a reference back to Bonegrid.Grid
             if ('grid' in options) this.grid = options.grid;
         },
 
         render : function() {
+            // Ensure `el` always is a jQuery element
             this.el = $(this.el);
             if (this.grid) {
                 this.grid.showing().each(function(model) {
@@ -89,7 +113,8 @@ Bonegrid = {};
     });
 
     Bonegrid.Grid = Backbone.View.extend({
-        data : null,
+        data : [],
+        columns : [],
         options : {
             collection : Bonegrid.Collection,
             row : Bonegrid.Row,
@@ -108,7 +133,7 @@ Bonegrid = {};
         {
             options || (options={});
 
-            _.bindAll(this, 'render', 'showing', 'row');
+            _.bindAll(this, 'render', 'showing', 'row', 'columnize');
 
             for (key in this.options)
             {
@@ -118,22 +143,43 @@ Bonegrid = {};
 
             var data = ('data' in options) ? options.data : [];
             this.data = new this.options['collection'](data);
+
+            this.columns = ('columns' in options)
+                ? options.columns : this.columnize(this.data);
             return this;
+        },
+
+        columnize : function(collection)
+        {
+            if (collection.length === 0) return [];
+            var keys =  _(collection.at(0).attributes).keys();
+            return _(keys).map(function(key) {
+                return { id : key, name : key }
+            });
         },
 
         render : function()
         {
-            this.el.html('<table><thead></thead><tbody></tbody><tfooter></tfooter></table>');
+            this.el.html('<table></table>');
             if (this.options['header']) {
                 this.current.header = new this.options['header']({
-                    el : this.$('thead'),
+                    el : this.el.prepend($('<thead></thead>')),
+                    columns : this.columns,
                     grid : this
                 }).render();
             }
+
             this.current.body = new this.options['body']({
-                el : this.$('tbody'),
+                el : this.el.append($('<tbody></tbody>')),
                 grid : this
             }).render();
+
+            if (this.options['footer']) {
+                this.current.footer = new this.options['footer']({
+                    el : this.el.append($('<tfooter></tfooter>')),
+                    grid : this
+                }).render();
+            }
 
             return this;
         },
