@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Bonegrid.js example</title>
+        <script src="js/jquery-1.6.4.js"></script>
+        <script src="js/underscore.js"></script>
+        <script src="js/backbone.js"></script>
+        <script src="../bonegrid.js"></script>
+        <style>
+        </style>
+    </head>
+    <body>
+        <h1>Bonegrid example</h1>
+
+        <table id="bonegrid"></table>
+        <script>
+            var gridData = [
+                {name : 'Foo', published : '12:30'},
+                {name : 'Bar', published : '20:00'}
+            ];
+            var grid = new Bonegrid({
+                el : $('#bonegrid'),
+                data : new Bonegrid.Collection(gridData)
+            }); 
+            grid.render();
+            /*
+                header : new Grid.Header({
+                    columns : ['name', 'published'],
+                }), 
+                render : {
+                    name : function(model)
+                    {
+                        return $(this.template).tmpl(model.attribute);
+                    }
+                },
+            */
+        </script>
+    </body>
+</html>
