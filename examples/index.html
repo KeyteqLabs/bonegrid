@@ -7,37 +7,77 @@
         <script src="js/backbone.js"></script>
         <script src="../bonegrid.js"></script>
         <style>
+            table {
+                border-spacing: 0;
+                border-collapse: collapse;
+                width: 100%;
+            }
+            table.head thead {
+                background: white;
+                display: table-header-group;
+            }
+            table tbody {
+            }
+            table th {
+                text-align: left;
+            }
+            table td {
+                text-align: left;
+                padding: 4px 10px;
+                border: 1px solid #777;
+            }
+
+            table {
+                border: 1px solid red;
+            }
+
+            section {
+                margin-left: 50px;
+                height: 300px;
+                width: 600px;
+                position: relative;
+                float: left;
+                overflow-x: auto;
+                overflow-y: scroll;
+                -webkit-overflow-scrolling: touch;
+            }
         </style>
     </head>
     <body>
         <h1>Bonegrid example</h1>
 
-        <table id="bonegrid"></table>
+        <section id="bonegrid2"></section>
+
         <script>
             (function(){
                 var gridData = [];
-                for (var i = 0; i < 50; i++)
-                    gridData.push({ name : 'Foo ' + i, published : '12:' + i });
+                for (var i = 0; i < 500; i++)
+                    gridData.push({ name : 'Foo ' + i, published : '12:' + i, i : i });
 
-                var grid = new Bonegrid.Grid({
-                    el : $('#bonegrid'),
+                NameCell = Bonegrid.Cell.extend({
+                    render : function() {
+                        this.el = $(this.el);
+                        this.el.html($('<strong>' + this.model.get(this.key) + '</strong>'));
+                        return this;
+                    }
+                });
+                var grid2 = new Bonegrid.Grid({
+                    el : $('#bonegrid2'),
                     data : gridData,
+                    pager : false,
                     columns : [
                         {
                             id : 'name',
                             name : 'Name',
-                            header : function(data) {
-                                return $('<th><strong>' + data.name + '</strong></th>');
-                            }
+                            render : NameCell,
                         },
                         {
                             id : 'published',
                             name : 'Published'
                         },
                     ],
-                    limit : 10
-                }); 
-                grid.render();
+                    limit : 200
+                }).render(); 
             }).call(this);
 
             //grid.show(
