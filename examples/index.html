@@ -14,15 +14,19 @@
 
         <table id="bonegrid"></table>
         <script>
-            var gridData = [
-                {name : 'Foo', published : '12:30'},
-                {name : 'Bar', published : '20:00'}
-            ];
-            var grid = new Bonegrid({
-                el : $('#bonegrid'),
-                data : new Bonegrid.Collection(gridData)
-            }); 
-            grid.render();
+            (function(){
+                var gridData = [];
+                for (var i = 0; i < 50; i++)
+                    gridData.push({ name : 'Foo ' + i, published : '12:' + i });
+
+                var grid = new Bonegrid.Grid({
+                    el : $('#bonegrid'),
+                    data : gridData,
+                    limit : 10
+                }); 
+                grid.render();
+            }).call(this);
+            //grid.show(
             /*
                 header : new Grid.Header({
                     columns : ['name', 'published'],

@@ -4,70 +4,9 @@
 //     For all details and documentation:
 //     http://KeyteqLabs.github.com/bonegrid
 
+Bonegrid = {};
 (function(){
-    Bonegrid = Backbone.View.extend({
-        data : null,
-        initialize : function(options)
-        {
-            this.data = options.data || new Bonegrid.Collection;
-            if (typeof this.data == 'array')
-                this.data = new Bonegrid.Collection(this.data);
-        },
-
-        render : function()
-        {
-            this.el.html('<table><thead></thead><tbody></tbody><tfooter></tfooter></table>');
-            this.body = this.$('tbody');
-            this.data.each(function(model) {
-                this.addRow(model);
-            }, this);
-            return this;
-        },
-
-        addRow : function(model)
-        {
-            var row = new Bonegrid.Row({ model : model });
-            this.body.append(row.render().el);
-        },
-
-        display : function(start, length)
-        {
-            var models = new Backbone.Collection;
-            for (var i = 0; i<length; i++)
-            {
-                models.add(this.data.at(start + i));
-            }
-            this.body.render(models, {append : false });
-        }
-    }); 
-    Bonegrid.Row = Backbone.View.extend({
-        template : '<tr id="${id}" class="${class}">${cells}</tr>',
-        tagName : 'tr',
-
-        initialize : function(options)
-        {
-            this.model = options.model;
-        },
-
-        render : function(models, options)
-        {
-            var defaults = {
-                append : true,
-                defer : false
-            };
-            options = options || defaults;
-            this.el = $(this.el);
-            var row = this.el, cell;
-
-            _(this.model.attributes).each(function(value, name) {
-                cell = new Bonegrid.Cell({
-                    model : this.model,
-                    key : name
-                });
-                row.append(cell.render().el);
-            }, this);
-            return this;
-        }
+    Bonegrid.Collection = Backbone.Collection.extend({
     }); 
     Bonegrid.Cell = Backbone.View.extend({
         tagName : 'td',
@@ -84,7 +23,133 @@
             return this;
         }
     });
-    Bonegrid.Collection = Backbone.Collection.extend({
+    Bonegrid.Row = Backbone.View.extend({
+        template : '<tr id="${id}" class="${class}">${cells}</tr>',
+        tagName : 'tr',
+
+        initialize : function(options)
+        {
+            this.model = options.model;
+        },
+
+        render : function(models, options)
+        {
+            var defaults = {
+                append : true
+            };
+            options = options || defaults;
+            this.el = $(this.el);
+            var row = this.el, cell;
+
+            _(this.model.attributes).each(function(value, name) {
+                cell = new Bonegrid.Cell({
+                    model : this.model,
+                    key : name
+                });
+                row.append(cell.render().el);
+            }, this);
+            return this;
+        }
+    });
+
+    Bonegrid.Header = Backbone.View.extend({
+        render : function() {
+            return this;
+        }
+    });
+
+    Bonegrid.Body = Backbone.View.extend({
+        grid : false,
+        initialize : function(options) {
+            options || (options = {});
+            _.bindAll(this, 'render', 'addRow');
+
+            if ('grid' in options) this.grid = options.grid;
+        },
+
+        render : function() {
+            this.el = $(this.el);
+            if (this.grid) {
+                this.grid.showing().each(function(model) {
+                    this.addRow(model);
+                }, this);
+            }
+            return this;
+        },
+
+        addRow : function(model, container)
+        {
+            var container = container || this.el;
+            var rowRender = this.grid.row();
+            var row = new rowRender({
+                model : model
+            });
+            container.append(row.render().el);
+        }
+    });
+
+    Bonegrid.Grid = Backbone.View.extend({
+        data : null,
+        options : {
+            collection : Bonegrid.Collection,
+            row : Bonegrid.Row,
+            cell : Bonegrid.Cell,
+            header : Bonegrid.Header,
+            body : Bonegrid.Body,
+            footer : false,
+            limit : 50,
+            start : 0
+        },
+        current : {
+            start : 0
+        },
+
+        initialize : function(options)
+        {
+            options || (options={});
+
+            _.bindAll(this, 'render', 'showing', 'row');
+
+            for (key in this.options)
+            {
+                if (key in options)
+                    this.options[key] = options[key];
+            }
+
+            var data = ('data' in options) ? options.data : [];
+            this.data = new this.options['collection'](data);
+            return this;
+        },
+
+        render : function()
+        {
+            this.el.html('<table><thead></thead><tbody></tbody><tfooter></tfooter></table>');
+            if (this.options['header']) {
+                this.current.header = new this.options['header']({
+                    el : this.$('thead'),
+                    grid : this
+                }).render();
+            }
+            this.current.body = new this.options['body']({
+                el : this.$('tbody'),
+                grid : this
+            }).render();
+
+            return this;
+        },
+
+        showing : function()
+        {
+            var start = this.current.start, end = this.current.start + this.options.limit;
+            var show = this.data.toArray().slice(start, end);
+            this.data.reset(show);
+            return this.data;
+        },
+
+        row : function()
+        {
+            return this.options['row'];
+        }
     }); 
 }).call(this);
 
