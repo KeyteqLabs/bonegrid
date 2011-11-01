@@ -90,15 +90,18 @@ Bonegrid = {};
             var render, html = $(this.tmpl);
             this.el.html(html);
             _(this.columns).each(function(col, key) {
-                render = ('header' in col) ? col.header : this.renderCol;
-                this.cells[key] = render(col);
+                if ('header' in col)
+                    render = new col['header'](col).render().el;
+                else
+                    render  = this.renderCol(col);
+
+                this.cells[key] = render;
                 this.$('tr').append(this.cells[key]);
             }, this);
             return this;
         },
 
         resizeLike : function(cells) {
-            console.log(cells);
             _(this.cells).each(function(cell, key) {
                 cell.css({
                     width : cells.eq(key).outerWidth()
@@ -157,6 +160,7 @@ Bonegrid = {};
             if ('grid' in options) this.grid = options.grid;
             if ('pager' in options) this.pager = options.pager;
             if ('collection' in options) this.collection = options.collection;
+
             this.collection.bind('reset', this.onReset);
             this.collection.bind('add', this.onAdd);
             this.collection.bind('rm', this.onRm);
@@ -219,7 +223,7 @@ Bonegrid = {};
             });
             this._rows[model.id] = row;
             container.append(row.render().el);
-            this.trigger('add', [row, row.el.children()]);
+            this.trigger('add', row, row.el.children());
         },
 
         rowHeight : function()
@@ -237,12 +241,14 @@ Bonegrid = {};
     Bonegrid.Grid = Backbone.View.extend({
         collection : null,
         columns : [],
+        _views : {
+            body : Bonegrid.Body
+        },
         options : {
             collection : Bonegrid.Collection,
             row : Bonegrid.Row,
             cell : Bonegrid.Cell,
             header : Bonegrid.Header,
-            body : Bonegrid.Body,
             footer : false,
             pager : false,
             autosize : true,
@@ -252,6 +258,21 @@ Bonegrid = {};
         },
         current : {
             start : 0
+        },
+        _settings : {
+            body : {},
+            header : {},
+        },
+
+        settings : function(scope, settings) {
+            if (settings) {
+                if ('render' in settings) {
+                    this._view[scope] = settings.render;
+                    delete settings.render;
+                }
+                this._settings[scope] = settings;
+            }
+            return this._settings[scope];
         },
 
         initialize : function(options)
@@ -266,6 +287,9 @@ Bonegrid = {};
                     this.options[key] = options[key];
             }
 
+            if ('body' in options) this.settings('body', options.body);
+            if ('header' in options) this.settings('header', options.header);
+
             var data = ('data' in options) ? options.data : [];
             this.collection = new this.options['collection'](data);
             this.collection.setCriteria(this.options.criteria);
@@ -274,15 +298,21 @@ Bonegrid = {};
             this.columns = ('columns' in options)
                 ? options.columns : this.columnize(this.collection);
 
-            this.current.body = new this.options['body']({
-                grid : this,
-                collection : this.collection,
-                pager : this.options.pager
-            });
+            this.createBody();
 
             this.current.body.bind('add', this.onRowAdd);
 
             return this;
+        },
+
+        createBody : function()
+        {
+            options = this.settings('body');
+            options.grid = this;
+            options.collection = this.collection;
+            options.pager = this.options.pager
+
+            return this.current.body = new this._views['body'](options);
         },
 
         /**
