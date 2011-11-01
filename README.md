@@ -43,14 +43,14 @@ var grid = new Bonegrid.Grid({
 ##Column specification
 You can control Bonegrid behaviour through the _columns_ option.
 It has hooks for handling how the grid is rendered:
-* id
+ * id
     What attribute name to get from the model.
     The model will receive this value in _model.get(<id>)_
-* name
+ * name
     The name to use when rendering the column header.
-* render
+ * render
     Can be used to specify what Backone.View to use for rendering this cell type
-* header
+ * header
     Can be used to specify what Backbone.View to use for rendering the column header
 
 ###Override cell rendering
