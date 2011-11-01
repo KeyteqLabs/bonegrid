@@ -29,11 +29,11 @@ var grid = new Bonegrid.Grid({
     data : data,
     columns : [
         {
-            id : 'name',
+            key : 'name',
             name : 'Name'
         },
         {
-            id : 'position',
+            key : 'position',
             name : 'Placement on body'
         },
     ]
@@ -44,10 +44,10 @@ var grid = new Bonegrid.Grid({
 You can control Bonegrid behaviour through the _columns_ option.
 It has hooks for handling how the grid is rendered:
 
- * id
+ * key
 
     What attribute name to get from the model.
-    The model will receive this value in _model.get(<id>)_
+    The model will receive this value in _model.get(<key>)_
 
  * name
 
@@ -76,12 +76,12 @@ var grid = new Bonegrid.Grid({
     data : data,
     columns : [
         {
-            id : 'name',
+            key : 'name',
             name : 'Name',
             render : PrettyCell
         },
         {
-            id : 'position',
+            key : 'position',
             name : 'Placement on body'
         },
     ]

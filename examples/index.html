@@ -61,7 +61,7 @@
         <script>
             (function(){
                 var gridData = [];
-                for (var i = 0; i < 500; i++)
+                for (var i = 0; i < 100; i++)
                     gridData.push({ name : 'Foo ' + i, published : '12:' + i, i : i });
 
                 NameCell = Bonegrid.Cell.extend({
@@ -79,13 +79,14 @@
                     pager : false,
                     columns : [
                         {
-                            id : 'name',
+                            key : 'name',
                             name : 'Name',
                             render : NameCell,
                         },
                         {
-                            id : 'published',
-                            name : 'Published'
+                            key : 'published',
+                            name : 'Published',
+                            className : 'foobar'
                         },
                     ],
                     limit : 20

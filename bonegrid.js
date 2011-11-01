@@ -25,10 +25,12 @@ Bonegrid = {};
     }); 
     Bonegrid.Cell = Backbone.View.extend({
         tagName : 'td',
+        className : 'bonegrid-cell',
         initialize : function(options)
         {
             this.model = options.model;
             this.key = options.key;
+            this.name = options.name;
         },
         render : function()
         {
@@ -53,12 +55,12 @@ Bonegrid = {};
             this.el = $(this.el);
             var row = this.el, cell, render;
 
-            _(this.columns).each(function(col) {
+            _(this.columns).each(function(col, key) {
                 render = ('render' in col) ? col.render : Bonegrid.Cell;
-                cell = new render({
-                    model : this.model,
-                    key : col.id
-                });
+                // Append model and position to options sent to Bonegrid.Row
+                col.model = this.model;
+                col.position = key;
+                cell = new render(col);
                 row.append(cell.render().el);
             }, this);
             return this;
@@ -68,6 +70,7 @@ Bonegrid = {};
     Bonegrid.Header = Backbone.View.extend({
         grid : false,
         columns : [],
+        cells : [],
         tagName : 'section',
         className : 'bonegrid-head',
         tmpl : '<table><thead><tr></tr></thead></table>',
@@ -86,15 +89,21 @@ Bonegrid = {};
             this.el = $(this.el);
             var render, html = $(this.tmpl);
             this.el.html(html);
-            var cells = this.grid.row(1).children();
             _(this.columns).each(function(col, key) {
                 render = ('header' in col) ? col.header : this.renderCol;
-                var result = render(col).css({
-                    width : cells.eq(key).outerWidth()
-                });
-                this.$('tr').append(result);
+                this.cells[key] = render(col);
+                this.$('tr').append(this.cells[key]);
             }, this);
             return this;
+        },
+
+        resizeLike : function(cells) {
+            console.log(cells);
+            _(this.cells).each(function(cell, key) {
+                cell.css({
+                    width : cells.eq(key).outerWidth()
+                });
+            }, this);
         },
 
         renderCol : function(data) {
@@ -142,7 +151,7 @@ Bonegrid = {};
         _rows : {},
         initialize : function(options) {
             options || (options = {});
-            _.bindAll(this, 'render', 'addRow', 'page', 'row', 'onReset', 'onAdd', 'onRm');
+            _.bindAll(this, 'render', 'addRow', 'page', 'onReset', 'onAdd', 'onRm', 'row');
 
             // Keep a reference back to Bonegrid.Grid
             if ('grid' in options) this.grid = options.grid;
@@ -176,6 +185,8 @@ Bonegrid = {};
         onRm : function(model)
         {
             this._rows[model.id].destroy();
+            if (this._rows.length === 0)
+                this.trigger('empty', [this.collection, this]);
         },
         onReset : function(collection)
         {
@@ -208,6 +219,7 @@ Bonegrid = {};
             });
             this._rows[model.id] = row;
             container.append(row.render().el);
+            this.trigger('add', [row, row.el.children()]);
         },
 
         rowHeight : function()
@@ -233,6 +245,7 @@ Bonegrid = {};
             body : Bonegrid.Body,
             footer : false,
             pager : false,
+            autosize : true,
             criteria : {},
             limit : 50,
             start : 0,
@@ -245,7 +258,7 @@ Bonegrid = {};
         {
             options || (options={});
 
-            _.bindAll(this, 'render', 'showing', 'row', 'columnize');
+            _.bindAll(this, 'render', 'row', 'columnize', 'onRowAdd');
 
             for (key in this.options)
             {
@@ -260,9 +273,25 @@ Bonegrid = {};
 
             this.columns = ('columns' in options)
                 ? options.columns : this.columnize(this.collection);
+
+            this.current.body = new this.options['body']({
+                grid : this,
+                collection : this.collection,
+                pager : this.options.pager
+            });
+
+            this.current.body.bind('add', this.onRowAdd);
+
             return this;
         },
 
+        /**
+        * Take a collection with models and read column information based on the first
+        * models attribute names
+        *
+        * @param Bonegrid.Collection
+        * @return array
+        */
         columnize : function(collection)
         {
             if (collection.length === 0) return [];
@@ -275,13 +304,7 @@ Bonegrid = {};
         render : function()
         {
             this.el.addClass('bonegrid');
-
-            this.current.body = new this.options['body']({
-                grid : this,
-                collection : this.collection,
-                pager : this.options.pager
-            }).render();
-            this.el.append(this.current.body.el);
+            this.el.append(this.current.body.render().el);
             if (this.collection.length === 0)
                 this.collection.getRange(this.current.start, this.current.start + this.options.limit);
 
@@ -291,6 +314,7 @@ Bonegrid = {};
                     grid : this
                 }).render();
                 this.el.prepend(this.current.header.el);
+                //this.current.header.resizeLike(this.row(1));
             }
 
             if (this.options['footer']) {
@@ -303,10 +327,10 @@ Bonegrid = {};
             return this;
         },
 
-        showing : function()
+        onRowAdd : function(row, cells)
         {
-            var start = this.current.start, end = this.current.start + this.options.limit;
-            return [start, end];
+            if ('header' in this.current)
+                this.current.header.resizeLike(cells);
         },
 
         row : function(nth)
