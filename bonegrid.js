@@ -8,6 +8,8 @@ Bonegrid = {};
 (function(){
     Bonegrid.Collection = Backbone.Collection.extend({
     }); 
+    Bonegrid.Pager = Backbone.View.extend({
+    }); 
     Bonegrid.Cell = Backbone.View.extend({
         tagName : 'td',
         initialize : function(options)
