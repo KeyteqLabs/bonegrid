@@ -128,7 +128,7 @@ Bonegrid = {};
 
         resizeLike : function(cells) {
             _(this.cells).each(function(cell, key) {
-                cell.css({
+                cell.el.css({
                     width : cells.eq(key).outerWidth()
                 });
             }, this);
@@ -305,7 +305,7 @@ Bonegrid = {};
         {
             options || (options={});
 
-            _.bindAll(this, 'render', 'row', 'columnize', 'onRowAdd');
+            _.bindAll(this, 'render', 'row', 'columnize', 'onRowAdd', 'createBody');
 
             for (key in this.options)
             {
@@ -313,6 +313,7 @@ Bonegrid = {};
                     this.options[key] = options[key];
             }
 
+            if ('collection' in options) this._view.collection = options.collection;
             if ('body' in options) this.settings('body', options.body);
             if ('header' in options) this.settings('header', options.header);
 

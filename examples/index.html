@@ -80,6 +80,7 @@
                     el : $('#bonegrid2'),
                     data : gridData,
                     pager : false,
+                    limit : 20,
                     body : {
                         className : 'kp'
                     },
@@ -103,8 +104,7 @@
                                 name : 'Published',
                             }
                         },
-                    ],
-                    limit : 20
+                    ]
                 }).render(); 
             }).call(this);
 
