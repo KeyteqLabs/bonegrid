@@ -22,6 +22,9 @@
             }
             .bonegrid-foot {
             }
+            table .kp-table-primary {
+                width: 100%;
+            }
             table {
                 border-spacing: 0;
                 border-collapse: collapse;
@@ -67,7 +70,7 @@
                 NameCell = Bonegrid.Cell.extend({
                     render : function() {
                         this.el = $(this.el);
-                        this.el.html($('<strong>' + this.model.get(this.key) + '</strong>'));
+                        this.el.html($('<strong>' + this.model.get(this.options.key) + '</strong>'));
                         return this;
                     }
                 });
@@ -83,13 +86,22 @@
                     columns : [
                         {
                             key : 'name',
-                            name : 'Name',
-                            render : NameCell,
+                            className : 'kp-table-primary',
+                            cell : {
+                                view : NameCell,
+                            },
+                            header : {
+                                name : 'Name',
+                            }
                         },
                         {
                             key : 'published',
-                            name : 'Published',
-                            className : 'foobar'
+                            cell : {
+                                className : 'foobar',
+                            },
+                            header : {
+                                name : 'Published',
+                            }
                         },
                     ],
                     limit : 20
