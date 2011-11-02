@@ -274,7 +274,10 @@ Bonegrid = {};
             footer : Bonegrid.Footer
         },
         options : {
-            header : true,
+            header : {
+                on : true,
+                autosize : false
+            },
             body : true,
             footer : false,
             autosize : true,
@@ -292,11 +295,7 @@ Bonegrid = {};
 
         settings : function(scope, settings) {
             if (settings) {
-                if ('render' in settings) {
-                    this._view[scope] = settings.render;
-                    delete settings.render;
-                }
-                this._settings[scope] = settings;
+                _.extend(this._settings[scope], settings);
             }
             return this._settings[scope];
         },
@@ -405,8 +404,9 @@ Bonegrid = {};
 
         onRowAdd : function(row, cells)
         {
-            if ('header' in this.current)
+            if ('header' in this.current && this.settings('header').autosize) {
                 this.current.header.resizeLike(cells);
+            }
         },
 
         row : function(nth)
