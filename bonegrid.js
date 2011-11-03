@@ -65,8 +65,8 @@ Bonegrid = {};
         }
     });
     Bonegrid.Row = Bonegrid.View.extend({
-        template : '<tr id="${id}" class="${class}">${cells}</tr>',
         tagName : 'tr',
+        cells : [],
 
         _view : {
             cell : Bonegrid.Cell
@@ -89,15 +89,14 @@ Bonegrid = {};
                 // Append model and position to options sent to Bonegrid.Row
                 conf = {};
                 _.defaults(conf, col.cell, {model:this.model,position:key});
-                cell = this.view('cell', conf);
-                row.append(cell.render().el);
+                this.cells[key] = this.view('cell', conf);
+                row.append(this.cells[key].render().el);
             }, this);
             return this;
         }
     });
 
     Bonegrid.Header = Bonegrid.View.extend({
-        grid : false,
         columns : [],
         cells : [],
         tagName : 'section',
@@ -111,9 +110,6 @@ Bonegrid = {};
         initialize : function(options) {
             options || (options = {});
             _.bindAll(this, 'render', 'view');
-
-            // Keep a reference back to Bonegrid.Grid
-            if ('grid' in options) this.grid = options.grid;
 
             // And accept columns as well
             if ('columns' in options) this.columns = options.columns;
@@ -136,36 +132,6 @@ Bonegrid = {};
                 });
             }, this);
         },
-    });
-
-    Bonegrid.Footer = Bonegrid.View.extend({
-        grid : false,
-        tagName : 'section',
-        className : 'bonegrid-foot',
-
-        initialize : function(options) {
-            options || (options = {});
-            _.bindAll(this, 'render');
-
-            // Keep a reference back to Bonegrid.Grid
-            if ('grid' in options) this.grid = options.grid;
-
-            // And accept columns as well
-            if ('columns' in options) this.columns = options.columns;
-        },
-        render : function() {
-            this.el = $(this.el);
-            var render;
-            _(this.columns).each(function(col) {
-                render = ('header' in col) ? col.header : this.renderCol;
-                this.el.append(render(col));
-            }, this);
-            return this;
-        },
-
-        renderCol : function(data) {
-            return $('<th>' + data.name + '</th>');
-        }
     });
 
     Bonegrid.Body = Bonegrid.View.extend({
@@ -265,7 +231,7 @@ Bonegrid = {};
             row : Bonegrid.Row,
             cell : Bonegrid.Cell,
             header : Bonegrid.Header,
-            footer : Bonegrid.Footer
+            footer : false
         },
         options : {
             header : {
@@ -386,14 +352,6 @@ Bonegrid = {};
                     grid : this
                 });
                 this.el.prepend(this.current.header.render().el);
-            }
-
-            // Append footer element if footer is turned on
-            if (this.options['footer']) {
-                this.current.footer = this.view('footer', {
-                    grid : this
-                }).render();
-                this.el.append(this.current.footer.el);
             }
 
             // Make chainable
