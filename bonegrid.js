@@ -138,20 +138,36 @@ Bonegrid = {};
     });
 
     Bonegrid.Body = Bonegrid.View.extend({
-        collection : {},
-        tmpl : '<table><tbody></tbody></table>',
-        tagName : 'section',
-        className : 'bonegrid-body',
         _rows : {},
         _view : {
             header : Bonegrid.Header,
             row : Bonegrid.Row
         },
+        showing : 0,
+        tmpl : '<table><tbody></tbody></table>',
+        tagName : 'section',
+        className : 'bonegrid-body',
+
+        // Will hold a Bonegrid.Collection
+        collection : {},
+
+        // Array of column definition data
+        columns : [],
+
         initialize : function(options) {
             options || (options = {});
-            _.bindAll(this, 'render', 'addRow', 'page', 'onReset', 'onAdd', 'onRm', 'row');
+            if (!('collection' in options))
+                throw 'Bonegrid.Body missing collection';
+            this.collection = options.collection;
 
-            if ('collection' in options) this.collection = options.collection;
+            _.bindAll(this, 'render', 'addRow', 'append', 'onReset', 'onAdd', 'onRm', 'row');
+
+            for (key in this.options)
+            {
+                if (key in options)
+                    this.options[key] = options[key];
+            }
+
             if ('columns' in options) this.columns = options.columns;
 
             this.collection.bind('reset', this.onReset);
@@ -163,6 +179,8 @@ Bonegrid = {};
             // Ensure `el` always is a jQuery element
             this.el = $(this.el);
             this.el.html($(this.tmpl));
+
+
             var container = this.$('tbody');
             this.collection.each(function(model) {
                 this.addRow(model, container);
@@ -190,15 +208,9 @@ Bonegrid = {};
             }, this);
         },
 
-        events : {
-            //'scroll' : 'page'
-        },
-
-        page : function(e)
+        append : function(num)
         {
-            var scrollTop = this.el.scrollTop();
-            var height = this.el.height();
-            var offset = this.el.position().top;
+            this.collection.getRange(this.showing, this.showing + num);
         },
 
         addRow : function(model, container)
@@ -208,15 +220,21 @@ Bonegrid = {};
                 model : model,
                 columns : this.columns
             });
-            this._rows[model.id] = row;
+            this._rows[model.cid] = row;
             container.append(row.render().el);
+            this.showing++;
             this.trigger('add', row, row.el.children());
+            return row;
         },
 
         rowHeight : function()
         {
-            var num = this.el.children().length;
-            return this.el.height() / num;
+            if (this._rows.length > 0) {
+                var model = this.collection.at(0);
+                return this._rows[model.cid].height();
+            }
+            else
+                return 25;
         },
 
         row : function(nth)
@@ -263,11 +281,22 @@ Bonegrid = {};
             return this._settings[scope];
         },
 
+        events : {
+            'scroll' : 'page'
+        },
+
+        page : function(e)
+        {
+            var distance = this.current.body.el.height() - (this.el.height() + this.el.scrollTop());
+            if (distance <= 10)
+                this.current.body.append(this.options.limit);
+        },
+
         initialize : function(options)
         {
             options || (options={});
 
-            _.bindAll(this, 'render', 'columnize', 'onRowAdd', 'createBody');
+            _.bindAll(this, 'render', 'columnize', 'onRowAdd', 'createBody', 'autosize', 'page');
 
             for (key in this.options)
             {
@@ -343,6 +372,9 @@ Bonegrid = {};
             // Render Bonegrid.Body onto Grid
             this.el.append(this.current.body.render().el);
 
+            if (this.options.autosize)
+                this.autosize(this.options.autosize);
+
             // If there is no pre-loaded data in the collection
             // make sure to call `Bonegrid.Collection#getRange`
             if (this.collection.length === 0)
@@ -359,6 +391,23 @@ Bonegrid = {};
 
             // Make chainable
             return this;
+        },
+
+        // Automatically size body of grid to fill container
+        autosize : function(type)
+        {
+            switch (type) {
+                case 'height':
+                    var rowHeight = this.current.body.rowHeight();
+                    var height = ($(window).height() - this.el.offset().top);
+                    this.el.height(height);
+                    this.options.limit = Math.round(this.el.height() / rowHeight);
+                    break;
+                case 'width':
+                    break;
+                default:
+                    break;
+            }
         },
 
         // Callback for when the Bonegrid.Body view triggers _add_

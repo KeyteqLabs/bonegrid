@@ -9,15 +9,20 @@
         <link rel="stylesheet" type="text/css" href="example.css" />
     </head>
     <body>
-        <h1>Bonegrid example</h1>
+        <h1>Deffered Bonegrid example</h1>
 
         <section id="bonegrid2"></section>
 
         <script>
             (function(){
-                var gridData = [];
-                for (var i = 0; i < 100; i++)
-                    gridData.push({ name : 'Foo ' + i, published : '12:' + i, i : i });
+                GridData = Bonegrid.Collection.extend({
+                    getRange : function(start, end) {
+                        if (end > this.length) {
+                            for (var i = start; i < end; i++)
+                                this.add({ name : 'Foo ' + i, published : '12:' + i, i : i });
+                        }
+                    }
+                });
 
                 NameCell = Bonegrid.Cell.extend({
                     render : function() {
@@ -28,9 +33,10 @@
                 });
                 var grid2 = new Bonegrid.Grid({
                     el : $('#bonegrid2'),
-                    data : gridData,
+                    collection : GridData,
                     limit : 20,
                     autosize : 'height',
+                    pager : 'inifite',
                     body : {
                         className : 'kp'
                     },

@@ -1,0 +1,46 @@
+.bonegrid {
+    overflow-x: auto;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+}
+.bonegrid-head {
+    position: fixed;
+    background: white;
+}
+.bonegrid-body {
+    margin-top: 20px;
+}
+.bonegrid-foot {
+}
+table .kp-table-primary {
+    width: 100%;
+}
+table {
+    border-spacing: 0;
+    border-collapse: collapse;
+    width: 100%;
+}
+table th {
+    text-align: left;
+    padding: 0;
+    margin: 0;
+}
+table td {
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    padding: 4px 10px;
+    border: 1px solid #777;
+}
+
+table {
+    border: 1px solid red;
+}
+
+#bonegrid2 {
+    margin-left: 50px;
+    height: 500px;
+    width: 600px;
+    position: relative;
+    float: left;
+}
