@@ -33,6 +33,7 @@ Bonegrid = {};
     Bonegrid.Cell = Bonegrid.View.extend({
         tagName : 'td',
         className : 'bonegrid-cell',
+        model : null,
         options : {
             name : false,
             key : false
@@ -40,7 +41,7 @@ Bonegrid = {};
         initialize : function(options)
         {
             options || (options={});
-            if (!('model' in options))
+            if (this.model === null && !('model' in options))
                 throw 'Model missing';
             this.model = options.model;
             for (option in options) {
@@ -58,6 +59,7 @@ Bonegrid = {};
     });
     Bonegrid.HeaderCell = Bonegrid.Cell.extend({
         tagName : 'th',
+        model : false,
         render : function() {
             this.el = $(this.el);
             this.el.html($('<th class="sort-asc"><a>' + this.options.name + '</a></th>'));
@@ -99,6 +101,7 @@ Bonegrid = {};
     Bonegrid.Header = Bonegrid.View.extend({
         columns : [],
         cells : [],
+        model : false,
         tagName : 'section',
         className : 'bonegrid-head',
         tmpl : '<table><thead><tr></tr></thead></table>',
