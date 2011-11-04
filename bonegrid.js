@@ -23,6 +23,8 @@ Bonegrid = {};
             // Default to empty options
             options || (options = {});
 
+            _.bindAll(this, 'range');
+
             if ('collection' in options) {
                 this.collection = options.collection;
                 // Proxy some events to the collection
@@ -45,6 +47,13 @@ Bonegrid = {};
             var event = args.shift();
             args.unshift(event);
             this.trigger.apply(this, args);
+        },
+
+        // Ask to load a range in Bonegrid.Collection with current
+        // loaded criteria and existing data
+        // This results in multiple adds probably
+        range : function(start, end) {
+            this.collection.getRange(start, end);
         }
     });
 
