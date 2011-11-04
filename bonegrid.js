@@ -142,6 +142,7 @@ Bonegrid = {};
 
     Bonegrid.Header = Bonegrid.View.extend({
         columns : [],
+        proxy : null,
         cells : [],
         model : false,
         tagName : 'section',
@@ -156,8 +157,10 @@ Bonegrid = {};
             options || (options = {});
             _.bindAll(this, 'render', 'view');
 
-            // And accept columns as well
+            // Reference column definition
             if ('columns' in options) this.columns = options.columns;
+            // And EventProxy
+            if ('proxy' in options) this.columns = options.columns;
         },
         render : function() {
             this.el = $(this.el);
@@ -171,16 +174,14 @@ Bonegrid = {};
         },
 
         resizeLike : function(cells) {
-            _(this.cells).each(function(cell, key) {
-                cell.el.css({
-                    width : cells.eq(key).outerWidth()
-                });
+            _(cells).each(function(cell, key) {
+                this.cells[key].el.css('width', cell);
             }, this);
         },
     });
 
     Bonegrid.Body = Bonegrid.View.extend({
-        _rows : {},
+        _rows : null,
         _view : {
             header : Bonegrid.Header,
             row : Bonegrid.Row
@@ -196,53 +197,41 @@ Bonegrid = {};
         // Array of column definition data
         columns : [],
 
+        // Cached container node
+        container : null,
+
         initialize : function(options) {
             options || (options = {});
+
+            // Require a proxy object
             if (!('proxy' in options))
-                throw 'Bonegrid.Body missing proxy';
+                throw 'Bonegrid.Body requires proxy';
             this.proxy = options.proxy;
 
-            _.bindAll(this, 'render', 'addRow', 'onReset', 'onAdd', 'onRm', 'row');
+            this._rows = new Backbone.Collection;
 
-            for (key in this.options)
-            {
-                if (key in options)
-                    this.options[key] = options[key];
-            }
+            // Bind methods to this
+            _.bindAll(this, 'render', 'addRow', 'reset', 'removeRow', 'row', 'cellWidths');
 
+            // Take column definitions
             if ('columns' in options) this.columns = options.columns;
 
-            this.proxy.bind('reset', this.onReset);
-            this.proxy.bind('add', this.onAdd);
-            this.proxy.bind('rm', this.onRm);
+            // Bind to proxy methods for updating the content
+            var body = this;
+            this.proxy.bind('reset', this.reset);
+            this.proxy.bind('add', this.addRow);
+            this.proxy.bind('rm', this.removeRow);
 
+            // Make chainable
             return this;
         },
 
+        // Initially just fill with an empty table
         render : function() {
             // Ensure `el` always is a jQuery element
             this.el = $(this.el).html($(this.tmpl));
-
+            this.container = this.$('tbody');
             return this;
-        },
-
-        onAdd : function(model)
-        {
-            this.addRow(model);
-        },
-        onRm : function(model)
-        {
-            this._rows[model.id].destroy();
-            if (this._rows.length === 0)
-                this.trigger('empty', [this.collection, this]);
-        },
-        onReset : function(collection)
-        {
-            var container = this.$('tbody');
-            container.html('');
-            collection.each(function(model) {
-                this.addRow(model, container);
-            }, this);
         },
 
         append : function(num)
@@ -250,28 +239,51 @@ Bonegrid = {};
             this.proxy.range(this.showing, this.showing + num);
         },
 
-        addRow : function(model, container)
+        removeRow : function(model)
         {
-            var container = container || this.$('tbody');
+            model.view.remove();
+            this._rows.remove(model);
+        },
+        reset : function(collection)
+        {
+            this.container.html('');
+            collection.each(function(model) {
+                this.addRow(model);
+            }, this);
+        },
+
+        addRow : function(model)
+        {
             var row = this.view('row', {
                 model : model,
                 columns : this.columns
             });
-            this._rows[model.cid] = row;
-            container.append(row.render().el);
+            model.view = row;
+            this._rows.add(model);
+
+            this.container.append(row.render().el);
             this.showing++;
-            this.trigger('add', row, row.el.children());
             return row;
         },
 
         rowHeight : function()
         {
             if (this._rows.length > 0) {
-                var model = this.collection.at(0);
-                return this._rows[model.cid].height();
+                var model = this._rows.at(0);
+                return model.view.el.height();
             }
             else
                 return 25;
+        },
+
+        cellWidths : function() {
+            if (this._rows.length > 0) {
+                var row = this._rows.at(0);
+                return _(row.view.cells).map(function(cell) {
+                    return cell.el.width();
+                });
+            }
+            return false;
         },
 
         row : function(nth)
@@ -431,9 +443,13 @@ Bonegrid = {};
             if (this.options['header']) {
                 this.current.header = this.view('header', {
                     columns : this.columns,
-                    grid : this
+                    proxy : this.proxy
                 });
                 this.el.prepend(this.current.header.render().el);
+
+                if (this.collection.length > 0 && this.settings('header').autosize) {
+                    this.current.header.resizeLike(this.current.body.cellWidths());
+                }
             }
 
             // Make chainable
@@ -458,9 +474,12 @@ Bonegrid = {};
         },
 
         // Callback for when the Bonegrid.Body view triggers _add_
-        onAdd : function(row, cells)
+        onAdd : function(row)
         {
             if ('header' in this.current && this.settings('header').autosize) {
+                var cells = _(row.view.cells).map(function(cell) {
+                    return cell.el.width();
+                });
                 this.current.header.resizeLike(cells);
             }
         }

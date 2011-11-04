@@ -32,11 +32,16 @@ describe('Bonegrid.EventProxy', function() {
                 expect(this.spy).toHaveBeenCalledThrice();
             });
 
-            it('page directly', function() {
+            it('page and sort directly', function() {
                 this.proxy.bind('page', this.spy);
                 this.collection.trigger('page');
                 this.proxy.trigger('page');
                 expect(this.spy).toHaveBeenCalledOnce();
+
+                this.proxy.bind('sort', this.spy);
+                this.collection.trigger('sort');
+                this.proxy.trigger('sort');
+                expect(this.spy).toHaveBeenCalledTwice();
             });
         });
     });
