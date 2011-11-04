@@ -377,7 +377,7 @@ Bonegrid = {};
         page : function(e)
         {
             var distance = this.current.body.el.height() - (this.el.height() + this.el.scrollTop());
-            if (distance <= 10)
+            if (distance <= 100)
                 this.current.body.append(this.options.limit);
         },
 
