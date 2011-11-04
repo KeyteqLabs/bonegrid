@@ -504,7 +504,8 @@ Bonegrid = {};
                     var height = par.height() - (this.el.offset().top - par.offset().top);
                     this.el.css({
                         overflow : 'auto',
-                        height : height
+                        height : height,
+                        '-webkit-overflow-scrolling': 'touch'
                     });
                     var rowHeight = this.current.body.rowHeight();
                     this.options.limit = Math.round(this.el.height() / rowHeight);
