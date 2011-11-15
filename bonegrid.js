@@ -21,11 +21,11 @@ Bonegrid = {};
         // Constructor
         initialize : function(options) {
             // Default to empty options
-            options || (options = {});
+            options = options || ({});
 
             _.bindAll(this, 'range', 'sort');
 
-            if ('collection' in options) {
+            if (options.hasOwnProperty('collection')) {
                 this.collection = options.collection;
                 // Proxy some events to the collection
                 this.proxyCollection(this.collection, ['add', 'remove', 'reset']);
@@ -42,10 +42,13 @@ Bonegrid = {};
 
         // Set up proxies for collection events
         proxyCollection : function(collection, events) {
-            for (var key in events) {
-                // Bind to a curried _proxy
-                collection.bind(events[key],
-                    _.bind(this._proxy, this, events[key]));
+            var key;
+            for (key in events) {
+                if (events.hasOwnProperty(key)) {
+                    // Bind to a curried _proxy
+                    collection.bind(events[key],
+                        _.bind(this._proxy, this, events[key]));
+                }
             }
         },
 
@@ -83,8 +86,8 @@ Bonegrid = {};
     Bonegrid.View = Backbone.View.extend({
         _view : {},
         view : function(scope, data) {
-            data || (data = {});
-            var use = (data && 'view' in data) ? data.view : this._view[scope];
+            data = data || ({});
+            var use = (data.hasOwnProperty('view')) ? data.view : this._view[scope];
             delete data.view;
             return new use(data);
         }
@@ -99,13 +102,16 @@ Bonegrid = {};
         },
         initialize : function(options)
         {
-            options || (options={});
-            if (this.model === null && !('model' in options))
+            options = options || ({});
+            if (this.model === null && !options.hasOwnProperty('model'))
                 throw 'Model missing';
             this.model = options.model;
+            var option;
             for (option in options) {
-                if (option in this.options)
-                    this.options[option] = options[option];
+                if (options.hasOwnProperty(option)) {
+                    if (this.options.hasOwnProperty(option))
+                        this.options[option] = options[option];
+                }
             }
         },
         render : function()
@@ -149,6 +155,7 @@ Bonegrid = {};
     });
     Bonegrid.HeaderCell = Bonegrid.Cell.extend({
         tagName : 'th',
+        className : 'sort-asc',
         model : false,
         asc : true,
         proxy : null,
@@ -157,13 +164,15 @@ Bonegrid = {};
         },
 
         initialize : function(options) {
-            if (!('proxy' in options)) throw 'Bonegrid.HeaderCell requires EventProxy';
+            if (!options.hasOwnProperty('proxy')) throw 'Bonegrid.HeaderCell requires EventProxy';
             this.proxy = options.proxy;
         },
 
         render : function() {
             this.el = $(this.el);
-            this.el.html($('<th class="sort-asc"><a>' + this.options.name + '</a></th>'));
+            this.el.html(
+                this.make('a', {class:'sort-asc'}, this.options.name)
+            );
             return this;
         },
 
@@ -191,13 +200,13 @@ Bonegrid = {};
         },
 
         initialize : function(options) {
-            options || (options = {});
+            options = options || ({});
             _.bindAll(this, 'render', 'view');
 
             // Reference column definition
-            if ('columns' in options) this.columns = options.columns;
+            if (options.hasOwnProperty('columns')) this.columns = options.columns;
             // And EventProxy
-            if ('proxy' in options) this.proxy = options.proxy;
+            if (options.hasOwnProperty('proxy')) this.proxy = options.proxy;
         },
         render : function() {
             this.el = $(this.el);
@@ -239,10 +248,10 @@ Bonegrid = {};
         container : null,
 
         initialize : function(options) {
-            options || (options = {});
+            options = options || ({});
 
             // Require a proxy object
-            if (!('proxy' in options))
+            if (!options.hasOwnProperty('proxy'))
                 throw 'Bonegrid.Body requires proxy';
             this.proxy = options.proxy;
 
@@ -252,7 +261,7 @@ Bonegrid = {};
             _.bindAll(this, 'render', 'addRow', 'reset', 'removeRow', 'row', 'cellWidths');
 
             // Take column definitions
-            if ('columns' in options) this.columns = options.columns;
+            if (options.hasOwnProperty('columns')) this.columns = options.columns;
 
             // Bind to proxy methods for updating the content
             var body = this;
@@ -383,19 +392,20 @@ Bonegrid = {};
 
         initialize : function(options)
         {
-            options || (options={});
+            options = options || ({});
 
             _.bindAll(this, 'render', 'columnize', 'onAdd', 'createBody', 'autosize', 'page');
 
+            var key;
             for (key in this.options)
             {
-                if (key in options)
+                if (this.options.hasOwnProperty(key) && options.hasOwnProperty(key))
                     this.options[key] = options[key];
             }
 
-            if ('collection' in options) this._view.collection = options.collection;
-            if ('body' in options) this.settings('body', options.body);
-            if ('header' in options) this.settings('header', options.header);
+            if (options.hasOwnProperty('collection')) this._view.collection = options.collection;
+            if (options.hasOwnProperty('body')) this.settings('body', options.body);
+            if (options.hasOwnProperty('header')) this.settings('header', options.header);
 
             // Build the Collection object
             this.collection = this.view('collection');
@@ -407,7 +417,7 @@ Bonegrid = {};
                 collection : this.collection
             });
 
-            this.columns = ('columns' in options)
+            this.columns = (options.hasOwnProperty('columns'))
                 ? this.columnize(options.columns) : this.columnize(null, this.collection);
 
             this.createBody();
@@ -426,7 +436,8 @@ Bonegrid = {};
             });
 
             // Update reference to current body and return it
-            return this.current.body = this.view('body', options);
+            this.current.body = this.view('body', options);
+            return this.current.body;
         },
 
         // Take a collection with models and read column information based on the first
@@ -445,11 +456,11 @@ Bonegrid = {};
             return _(columns).map(function(col) {
                 cell = {};
                 header = {};
-                if ('cell' in col) {
+                if (col.hasOwnProperty('cell')) {
                     cell = col.cell;
                     delete col.cell;
                 }
-                if ('header' in col) {
+                if (col.hasOwnProperty('header')) {
                     header = col.header;
                     delete col.header;
                 }
@@ -479,7 +490,7 @@ Bonegrid = {};
                 this.collection.getRange(this.current.start, this.current.start + this.options.limit);
 
             // Prepend header element if header is turned on
-            if (this.options['header']) {
+            if (this.options.header) {
                 this.current.header = this.view('header', {
                     columns : this.columns,
                     proxy : this.proxy
@@ -520,7 +531,7 @@ Bonegrid = {};
         // Callback for when the Bonegrid.Body view triggers _add_
         onAdd : function(row)
         {
-            if ('header' in this.current && this.settings('header').autosize) {
+            if (this.current.hasOwnProperty('header') && this.settings('header').autosize) {
                 var cells = _(row.view.cells).map(function(cell) {
                     return cell.el.width();
                 });
@@ -529,4 +540,3 @@ Bonegrid = {};
         }
     }); 
 }).call(this);
-
