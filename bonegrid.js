@@ -554,8 +554,6 @@ Bonegrid = {};
             // make sure to call `Bonegrid.Collection#getRange`
             if (this.options.data.length > 0)
                 this.collection.reset(this.options.data);
-            else
-                this.collection.getRange(this.current.start, this.current.start + this.options.limit);
 
             // Make chainable
             return this;

@@ -36,9 +36,10 @@
                         return this;
                     }
                 });
+                var model = new GridData;
                 var grid2 = new Bonegrid.Grid({
                     el : $('#bonegrid2'),
-                    model : new GridData(),
+                    model : model,
                     limit : 20,
                     body : {
                         pager : 'scroll',
@@ -66,6 +67,7 @@
                         },
                     ]
                 }).render(); 
+                model.getRange(0, 20);
             }).call(this);
         </script>
     </body>
