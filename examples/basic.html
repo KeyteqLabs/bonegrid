@@ -11,7 +11,9 @@
     <body>
         <h1>Bonegrid example</h1>
 
-        <section id="bonegrid2"></section>
+        <div id="fillme">
+            <section id="bonegrid2"></section>
+        </div>
 
         <script>
             (function(){
@@ -30,13 +32,7 @@
                     el : $('#bonegrid2'),
                     data : gridData,
                     limit : 20,
-                    autosize : 'height',
-                    body : {
-                        className : 'kp'
-                    },
-                    header : {
-                        autosize : true
-                    },
+                    fill : $('#fillme'),
                     columns : [
                         {
                             key : 'name',
@@ -60,19 +56,6 @@
                     ]
                 }).render(); 
             }).call(this);
-
-            //grid.show(
-            /*
-                header : new Grid.Header({
-                    columns : ['name', 'published'],
-                }), 
-                render : {
-                    name : function(model)
-                    {
-                        return $(this.template).tmpl(model.attribute);
-                    }
-                },
-            */
         </script>
     </body>
 </html>

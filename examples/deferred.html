@@ -11,12 +11,17 @@
     <body>
         <h1>Deffered Bonegrid example</h1>
 
-        <section id="bonegrid2"></section>
+        <div id="fillme">
+            <div id="inner">
+                <section id="bonegrid2"></section>
+            </div>
+        </div>
 
         <script>
             (function(){
                 GridData = Bonegrid.Collection.extend({
                     getRange : function(start, end) {
+                        end = (end || start + this._limit);
                         if (end > this.length) {
                             for (var i = start; i < end; i++)
                                 this.add({ name : 'Foo ' + i, published : '12:' + i, i : i });
@@ -35,14 +40,10 @@
                     el : $('#bonegrid2'),
                     collection : GridData,
                     limit : 20,
-                    autosize : 'height',
-                    pager : 'inifite',
                     body : {
-                        className : 'kp'
+                        pager : 'scroll',
                     },
-                    header : {
-                        autosize : true
-                    },
+                    fill : $('#fillme'),
                     columns : [
                         {
                             key : 'name',

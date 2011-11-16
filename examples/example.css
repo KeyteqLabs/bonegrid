@@ -1,16 +1,15 @@
 .bonegrid {
+    /*
     overflow-x: auto;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
+    */
 }
 .bonegrid-head {
+    /*
     position: fixed;
+    */
     background: white;
-}
-.bonegrid-body {
-    margin-top: 20px;
-}
-.bonegrid-foot {
 }
 table .kp-table-primary {
     width: 100%;
@@ -36,10 +35,10 @@ table td {
 table {
     border: 1px solid red;
 }
-
-#bonegrid2 {
+#fillme {
     margin-left: 50px;
     height: 500px;
+    border-bottom:1px solid red;
     width: 600px;
     position: relative;
     float: left;

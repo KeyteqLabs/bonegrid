@@ -1,8 +1,8 @@
-//     Bonegrid.js 0.1.0
-//     (c) 2011 Raymond Julin, Keyteq AS
-//     Bonegrid may be freely distributed under the MIT license.
-//     For all details and documentation:
-//     http://KeyteqLabs.github.com/bonegrid
+// Bonegrid.js 0.1.0
+// (c) 2011 Raymond Julin, Keyteq AS
+// Bonegrid may be freely distributed under the MIT license.
+// For all details and documentation:
+// http://KeyteqLabs.github.com/bonegrid
 
 Bonegrid = {};
 (function(){
@@ -72,6 +72,7 @@ Bonegrid = {};
         _criteria : {},
         _limit : 10,
         getRange : function(start, end) {
+            end = (end || this._limit);
             this.reset(this.toArray().slice(start, end));
         },
 
@@ -201,30 +202,39 @@ Bonegrid = {};
 
         initialize : function(options) {
             options = options || ({});
-            _.bindAll(this, 'render', 'view');
+            _.bindAll(this, 'render', 'view', 'onRender');
 
             // Reference column definition
             if (options.hasOwnProperty('columns')) this.columns = options.columns;
             // And EventProxy
             if (options.hasOwnProperty('proxy')) this.proxy = options.proxy;
+            this.proxy.bind('render', this.onRender);
         },
         render : function() {
-            this.el = $(this.el);
-            var render, html = $(this.tmpl);
-            this.el.html(html);
+            this.el = $(this.el).html($(this.tmpl));
+
             _(this.columns).each(function(col, key) {
+                // Make sure we pass on the EventProxy in the column header options
                 col.header.proxy = this.proxy;
-                this.cells[key] = this.view('cell', col.header);
-                this.$('tr').append(this.cells[key].render().el);
+                // Load the view, possibly overloaded
+                this.cells[key] = this.view('cell', col.header).render();
+                // Append the cell on the row
+                this.$('tr').append(this.cells[key].el);
             }, this);
+            this.proxy.trigger('render', 'header');
             return this;
         },
 
-        resizeLike : function(cells) {
-            _(cells).each(function(cell, key) {
-                this.cells[key].el.css('width', cell);
-            }, this);
-        },
+        // Callback when the proxy fires a render call
+        // This happens a lot so we attempt to update the cell
+        // width quite a bit
+        onRender : function(component, data) {
+            if (component === 'body' && data && data.hasOwnProperty('cells')) {
+                _(data.cells).each(function(cell, key) {
+                    this.cells[key].el.css('width', cell);
+                }, this);
+            }
+        }
     });
 
     Bonegrid.Body = Bonegrid.View.extend({
@@ -233,6 +243,7 @@ Bonegrid = {};
             header : Bonegrid.Header,
             row : Bonegrid.Row
         },
+        fill : false,
         showing : 0,
         tmpl : '<table><tbody></tbody></table>',
         tagName : 'section',
@@ -248,7 +259,7 @@ Bonegrid = {};
         container : null,
 
         initialize : function(options) {
-            options = options || ({});
+            options = (options || {});
 
             // Require a proxy object
             if (!options.hasOwnProperty('proxy'))
@@ -258,26 +269,52 @@ Bonegrid = {};
             this._rows = new Backbone.Collection;
 
             // Bind methods to this
-            _.bindAll(this, 'render', 'addRow', 'reset', 'removeRow', 'row', 'cellWidths');
+            _.bindAll(this, 'render', 'addRow', 'reset', 'removeRow', 'row', 'cellWidths', 'autosize');
 
             // Take column definitions
             if (options.hasOwnProperty('columns')) this.columns = options.columns;
 
             // Bind to proxy methods for updating the content
-            var body = this;
             this.proxy.bind('reset', this.reset);
             this.proxy.bind('add', this.addRow);
             this.proxy.bind('rm', this.removeRow);
+
+            // When an element to fill has been sent, hook into the proxy
+            // render event to ensure we always still fill the container
+            // after a render somewhere
+            if (options.hasOwnProperty('fill'))
+            {
+                this.fill = options.fill;
+                this.proxy.bind('render', this.autosize);
+            }
+
+            // Use scroll based paging if set
+            if (options.hasOwnProperty('pager'))
+            {
+                if (options.pager === 'scroll')
+                    this.delegateEvents({'scroll' : 'pager'});
+            }
+
+            this.el = $(this.el);
 
             // Make chainable
             return this;
         },
 
+        pager : function(e)
+        {
+            // Calculate distance left before scrollbar hits the bottom
+            var distance = this.$('table').height() - (this.el.height() + this.el.scrollTop());
+            if (distance <= parseInt(this.el.height() / 10))
+                this.proxy.range(this.showing);
+        },
+
         // Initially just fill with an empty table
         render : function() {
             // Ensure `el` always is a jQuery element
-            this.el = $(this.el).html($(this.tmpl));
+            this.el.html($(this.tmpl));
             this.container = this.$('tbody');
+            this.proxy.trigger('render', 'body', {cells:this.cellWidths()});
             return this;
         },
 
@@ -311,6 +348,8 @@ Bonegrid = {};
 
             this.container.append(row.render().el);
             this.showing++;
+            // TODO This will be called _a lot_, up for improvement
+            this.proxy.trigger('render', 'body', this.cellWidths());
             return row;
         },
 
@@ -324,7 +363,8 @@ Bonegrid = {};
                 return 25;
         },
 
-        cellWidths : function() {
+        cellWidths : function()
+        {
             if (this._rows.length > 0) {
                 var row = this._rows.at(0);
                 return _(row.view.cells).map(function(cell) {
@@ -332,6 +372,22 @@ Bonegrid = {};
                 });
             }
             return false;
+        },
+
+        // Automatically size body of grid to fill a container
+        autosize : function(component)
+        {
+            var height = this.fill.outerHeight(true) - (this.el.offset().top - this.fill.offset().top);
+            this.el.css({
+                overflow : 'auto',
+                height : height,
+                '-webkit-overflow-scrolling': 'touch'
+            });
+
+            // Figure out how many rows I can contain in viewport
+            var rowHeight = this.rowHeight();
+            this.options.limit = Math.round(this.el.height() / rowHeight);
+            return this;
         },
 
         row : function(nth)
@@ -352,13 +408,8 @@ Bonegrid = {};
             footer : false
         },
         options : {
-            header : {
-                on : true,
-                autosize : false
-            },
-            body : true,
             footer : false,
-            autosize : true,
+            fill : false,
             criteria : {},
             data : [],
             limit : 50,
@@ -368,8 +419,14 @@ Bonegrid = {};
             start : 0
         },
         _settings : {
-            body : {},
-            header : {},
+            body : {
+                on : true,
+                autosize : true
+            },
+            header : {
+                on : true,
+                autosize : false
+            },
         },
 
         settings : function(scope, settings) {
@@ -392,9 +449,9 @@ Bonegrid = {};
 
         initialize : function(options)
         {
-            options = options || ({});
+            options = (options || {});
 
-            _.bindAll(this, 'render', 'columnize', 'onAdd', 'createBody', 'autosize', 'page');
+            _.bindAll(this, 'render', 'columnize', 'onAdd', 'createBody', 'page');
 
             var key;
             for (key in this.options)
@@ -406,6 +463,12 @@ Bonegrid = {};
             if (options.hasOwnProperty('collection')) this._view.collection = options.collection;
             if (options.hasOwnProperty('body')) this.settings('body', options.body);
             if (options.hasOwnProperty('header')) this.settings('header', options.header);
+
+            if (options.hasOwnProperty('fill'))
+            {
+                this.settings('body', {fill:options.fill});
+                this.settings('header', {fill:options.fill});
+            }
 
             // Build the Collection object
             this.collection = this.view('collection');
@@ -448,7 +511,7 @@ Bonegrid = {};
                 if (collection.length > 0) {
                     var keys =  _(collection.at(0).attributes).keys();
                     columns = _(keys).map(function(key) {
-                        return { id : key, name : key }
+                        return { id : key, name : key };
                     });
                 }
             }
@@ -477,10 +540,26 @@ Bonegrid = {};
             this.el.addClass('bonegrid');
 
             // Render Bonegrid.Body onto Grid
-            this.el.append(this.current.body.render().el);
+            this.el.append(this.current.body.el);
 
-            if (this.options.autosize)
-                this.autosize(this.options.autosize);
+
+            // Prepend header element if header is turned on
+            var header = this.settings('header');
+            if (header.on) {
+                this.current.header = this.view('header', {
+                    columns : this.columns,
+                    proxy : this.proxy
+                });
+                this.el.prepend(this.current.header.el);
+            }
+
+            // Header should render first as body size is calculated given it
+            if (this.current.header)
+                this.current.header.render();
+
+            // Render body
+            if (this.current.body)
+                this.current.body.render();
 
             // If there is no pre-loaded data in the collection
             // make sure to call `Bonegrid.Collection#getRange`
@@ -489,43 +568,8 @@ Bonegrid = {};
             else
                 this.collection.getRange(this.current.start, this.current.start + this.options.limit);
 
-            // Prepend header element if header is turned on
-            if (this.options.header) {
-                this.current.header = this.view('header', {
-                    columns : this.columns,
-                    proxy : this.proxy
-                });
-                this.el.prepend(this.current.header.render().el);
-
-                if (this.collection.length > 0 && this.settings('header').autosize) {
-                    this.current.header.resizeLike(this.current.body.cellWidths());
-                }
-            }
-
             // Make chainable
             return this;
-        },
-
-        // Automatically size body of grid to fill container
-        autosize : function(type)
-        {
-            switch (type) {
-                case 'height':
-                    var par = this.el.parent();
-                    var height = par.height() - (this.el.offset().top - par.offset().top);
-                    this.el.css({
-                        overflow : 'auto',
-                        height : height,
-                        '-webkit-overflow-scrolling': 'touch'
-                    });
-                    var rowHeight = this.current.body.rowHeight();
-                    this.options.limit = Math.round(this.el.height() / rowHeight);
-                    break;
-                case 'width':
-                    break;
-                default:
-                    break;
-            }
         },
 
         // Callback for when the Bonegrid.Body view triggers _add_
