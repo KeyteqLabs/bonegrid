@@ -436,22 +436,11 @@ Bonegrid = {};
             return this._settings[scope];
         },
 
-        events : {
-            'scroll' : 'page'
-        },
-
-        page : function(e)
-        {
-            var distance = this.current.body.el.height() - (this.el.height() + this.el.scrollTop());
-            if (distance <= 100)
-                this.current.body.append(this.options.limit);
-        },
-
         initialize : function(options)
         {
             options = (options || {});
 
-            _.bindAll(this, 'render', 'columnize', 'onAdd', 'createBody', 'page');
+            _.bindAll(this, 'render', 'columnize', 'onAdd', 'createBody');
 
             var key;
             for (key in this.options)
@@ -460,9 +449,9 @@ Bonegrid = {};
                     this.options[key] = options[key];
             }
 
-            if (options.hasOwnProperty('collection')) this._view.collection = options.collection;
             if (options.hasOwnProperty('body')) this.settings('body', options.body);
             if (options.hasOwnProperty('header')) this.settings('header', options.header);
+            if (options.hasOwnProperty('collection')) this._view.collection = options.collection;
 
             if (options.hasOwnProperty('fill'))
             {
@@ -470,8 +459,8 @@ Bonegrid = {};
                 this.settings('header', {fill:options.fill});
             }
 
-            // Build the Collection object
-            this.collection = this.view('collection');
+            // If a model has been sent use it, if not create a new collection
+            this.collection = (this.model || this.view('collection'));
             this.collection.setCriteria(this.options.criteria);
             this.collection.setLimit(this.options.limit);
 
