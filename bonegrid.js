@@ -377,7 +377,7 @@ Bonegrid = {};
         // Automatically size body of grid to fill a container
         autosize : function(component)
         {
-            var height = this.fill.outerHeight(true) - (this.el.offset().top - this.fill.offset().top);
+            var height = this.fill.height() - (this.el.offset().top - this.fill.offset().top);
             this.el.css({
                 overflow : 'auto',
                 height : height,
