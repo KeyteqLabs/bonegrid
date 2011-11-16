@@ -13,6 +13,16 @@ Bonegrid = {};
         this.initialize(options);
     };
 
+    // Helper to calculate scrollbarwidths
+    Bonegrid._scrollbarWidth = function() {
+        var width, tmpl = '<div><div /></div>', x=-999,w=100,
+            css = {width:w,height:w,position:'absolute',top:x,left:x,overflow:'scroll'},
+            div = $(tmpl).css(css).appendTo('body').find('div').css({width: '100%',height:200});
+        width = 100 - div.width();
+        div.parent().remove();
+        return width;
+    };
+
     // Actual implementation
     _.extend(Bonegrid.EventProxy.prototype, Backbone.Events, {
         // Reference to Bonegrid.Collection
@@ -69,7 +79,7 @@ Bonegrid = {};
     });
 
     Bonegrid.Collection = Backbone.Collection.extend({
-        _criteria : {},
+        criteria : new Backbone.Model,
         _limit : 10,
         getRange : function(start, end) {
             end = (end || this._limit);
@@ -77,7 +87,7 @@ Bonegrid = {};
         },
 
         setCriteria : function(criteria) {
-            this._criteria = criteria;
+            this.criteria.set(criteria);
         },
 
         setLimit : function(limit) {
