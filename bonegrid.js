@@ -88,6 +88,7 @@ Bonegrid = {};
 
         setCriteria : function(criteria) {
             this.criteria.set(criteria);
+            return this;
         },
 
         setLimit : function(limit) {
@@ -182,7 +183,7 @@ Bonegrid = {};
         render : function() {
             this.el = $(this.el);
             this.el.html(
-                this.make('a', {class:'sort-asc'}, this.options.name)
+                this.make('a', {'class':'sort-asc'}, this.options.name)
             );
             return this;
         },
@@ -341,6 +342,7 @@ Bonegrid = {};
         reset : function(collection)
         {
             this.container.html('');
+            this.showing = 0;
             collection.each(function(model) {
                 this.addRow(model);
             }, this);
