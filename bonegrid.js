@@ -277,7 +277,7 @@ Bonegrid = {};
                 throw 'Bonegrid.Body requires proxy';
             this.proxy = options.proxy;
 
-            this._rows = new Backbone.Collection;
+            this._rows = new Backbone.Collection();
 
             // Bind methods to this
             _.bindAll(this, 'render', 'addRow', 'reset', 'removeRow', 'row', 'cellWidths', 'autosize');
@@ -425,7 +425,7 @@ Bonegrid = {};
             criteria : {},
             data : [],
             limit : 50,
-            start : 0,
+            start : 0
         },
         current : {
             start : 0
@@ -438,7 +438,7 @@ Bonegrid = {};
             header : {
                 on : true,
                 autosize : false
-            },
+            }
         },
 
         settings : function(scope, settings) {
