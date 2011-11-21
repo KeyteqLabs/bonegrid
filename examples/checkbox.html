@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Bonegrid.js example</title>
+        <!--[if lt IE 9]>
+        <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="js/jquery-1.7.js"></script>
+        <script src="js/underscore.js"></script>
+        <script src="js/backbone.js"></script>
+        <script src="../bonegrid.js"></script>
+        <link rel="stylesheet" type="text/css" href="example.css" />
+    </head>
+    <body>
+        <h1>Bonegrid checkbox example</h1>
+
+        <div id="fillme">
+            <section id="bonegrid2"></section>
+        </div>
+
+        <script>
+            (function(){
+                var gridData = [];
+                for (var i = 0; i < 20; i++)
+                    gridData.push({ name : 'Foo ' + i, published : '12:' + i, i : i });
+
+                CheckHeader = Bonegrid.Cell.extend({
+                    initialize : function(options) {
+                        this.proxy = options.proxy;
+                    },
+                    render : function() {
+                        this.el = $(this.el);
+                        this.el.html($('<input type=checkbox />'));
+                        this.input = this.$('input');
+                        return this;
+                    },
+                    events : {
+                        'click input' : 'selectAll'
+                    },
+                    selectAll : function(e) {
+                        this.proxy.trigger('select', 'all', this.input.prop('checked'));
+                    }
+                });
+                CheckCell = Bonegrid.Cell.extend({
+                    initialize : function(options) {
+                        _.bindAll(this, 'select');
+                        this.proxy = options.proxy;
+                        this.proxy.bind('select', this.select);
+                    },
+                    select : function(scope, checked) {
+                        if (scope === 'all' || this.model.id === scope) {
+                            if (typeof checked !== 'undefined')
+                                this.input.prop('checked', checked);
+                            else
+                                this.input.prop('checked', !this.input.prop('checked'));
+
+                        }
+                    },
+                    render : function() {
+                        this.el = $(this.el);
+                        this.el.html($('<input type=checkbox />'));
+                        this.input = this.el.find('input');
+                        return this;
+                    }
+                });
+                var grid2 = new Bonegrid.Grid({
+                    el : $('#bonegrid2'),
+                    data : gridData,
+                    limit : 20,
+                    fill : $('#fillme'),
+                    columns : [
+                        {
+                            cell : {
+                                view : CheckCell
+                            },
+                            header : {
+                                view : CheckHeader
+                            }
+                        },
+                        {
+                            key : 'name',
+                            className : 'kp-table-primary',
+                            header : {
+                                name : 'Name'
+                            }
+                        },
+                        {
+                            key : 'published',
+                            cell : {
+                                className : 'foobar'
+                            },
+                            header : {
+                                name : 'Published'
+                            }
+                        }
+                    ]
+                }).render(); 
+            }).call(this);
+        </script>
+    </body>
+</html>

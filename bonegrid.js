@@ -146,6 +146,7 @@ Bonegrid = {};
         {
             this.model = options.model;
             this.columns = options.columns;
+            this.proxy = options.proxy;
         },
 
         render : function()
@@ -157,7 +158,7 @@ Bonegrid = {};
             var conf;
             _(this.columns).each(function(col, key) {
                 // Append model and position to options sent to Bonegrid.Row
-                conf = {};
+                conf = {proxy:this.proxy};
                 _.defaults(conf, col.cell, {model:this.model,position:key});
                 this.cells[key] = this.view('cell', conf);
                 row.append(this.cells[key].render().el);
@@ -352,7 +353,8 @@ Bonegrid = {};
         {
             var row = this.view('row', {
                 model : model,
-                columns : this.columns
+                columns : this.columns,
+                proxy : this.proxy
             });
             model.view = row;
             if (!this._rows.getByCid(model.cid))
