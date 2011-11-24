@@ -10,6 +10,14 @@
         <script src="js/backbone.js"></script>
         <script src="../bonegrid.js"></script>
         <link rel="stylesheet" type="text/css" href="example.css" />
+        <style>
+            .bonegrid-body {
+                border: 1px solid green;
+            }
+            #fillme {
+                padding-bottom: 30px;
+            }
+        </style>
     </head>
     <body>
         <h1>Bonegrid example</h1>
@@ -24,13 +32,6 @@
                 for (var i = 0; i < 100; i++)
                     gridData.push({ name : 'Foo ' + i, published : '12:' + i, i : i });
 
-                NameCell = Bonegrid.Cell.extend({
-                    render : function() {
-                        this.el = $(this.el);
-                        this.el.html($('<strong>' + this.model.get(this.options.key) + '</strong>'));
-                        return this;
-                    }
-                });
                 var grid2 = new Bonegrid.Grid({
                     el : $('#bonegrid2'),
                     data : gridData,
@@ -40,9 +41,6 @@
                         {
                             key : 'name',
                             className : 'kp-table-primary',
-                            cell : {
-                                view : NameCell
-                            },
                             header : {
                                 name : 'Name'
                             }

@@ -108,6 +108,7 @@ Bonegrid = {};
         tagName : 'td',
         className : 'bonegrid-cell',
         model : null,
+        proxy : null,
         options : {
             name : false,
             key : false
@@ -118,6 +119,7 @@ Bonegrid = {};
             if (this.model === null && !options.hasOwnProperty('model'))
                 throw 'Model missing';
             this.model = options.model;
+            this.proxy = options.proxy;
             var option;
             for (option in options) {
                 if (options.hasOwnProperty(option)) {
@@ -298,6 +300,7 @@ Bonegrid = {};
             {
                 this.fill = options.fill;
                 this.proxy.bind('render', this.autosize);
+                this.proxy.bind('resize', this.autosize);
             }
 
             // Use scroll based paging if set
@@ -317,7 +320,7 @@ Bonegrid = {};
         {
             // Calculate distance left before scrollbar hits the bottom
             var distance = this.$('table').height() - (this.el.height() + this.el.scrollTop());
-            if (distance <= parseInt(this.el.height() / 10))
+            if (distance <= parseInt(this.el.height() / 10), 10)
                 this.proxy.range(this.showing);
         },
 
@@ -389,9 +392,12 @@ Bonegrid = {};
         },
 
         // Automatically size body of grid to fill a container
-        autosize : function(component)
+        // TODO This method is most likely called on every
+        // row render and its rather slow.
+        // Should be optimized
+        autosize : function()
         {
-            var height = this.fill.height() - (this.el.offset().top - this.fill.offset().top);
+            var height = parseInt(this.fill.height() - (this.el.offset().top - this.fill.offset().top), 10);
             this.el.css({
                 overflow : 'auto',
                 height : height,
