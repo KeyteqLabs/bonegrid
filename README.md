@@ -41,28 +41,34 @@ var grid = new Bonegrid.Grid({
 ```
 
 ##Column specification
-You can control Bonegrid behaviour through the _columns_ option.
+You can control Bonegrid behaviour through the `columns` option.
 It has hooks for handling how the grid is rendered:
 
- * key
-
+ * **key**
     What attribute name to get from the model.
-    The model will receive this value in _model.get(<key>)_
+    The model will receive this value in `model.get(<key>)`
 
- * name
-
+ * **name**
     The name to use when rendering the column header.
 
- * render
+ * **cell**
+    Use to specify what Backone.View to use for rendering this cell type
+    
+    * **view**
+        Specify your own Bonegrid.View to handle rendering of each cell
+    * **className**
+        Specify what html class to set on each cell
 
-    Can be used to specify what Backone.View to use for rendering this cell type
-
- * header
-
+ * **header**
     Can be used to specify what Backbone.View to use for rendering the column header
 
+    * **view**
+        Specify your own Bonegrid.View to handle rendering of each cell
+    * **className**
+        Specify what html class to set on each cell
+
 ###Override cell rendering
-Lets override cell rendering for the _name_ field.
+Lets override cell rendering for the `name` field.
 
 ```js
 var PrettyCell = Bonegrid.Cell.extend({
@@ -78,7 +84,9 @@ var grid = new Bonegrid.Grid({
         {
             key : 'name',
             name : 'Name',
-            render : PrettyCell
+            cell : {
+                view : PrettyCell
+            }
         },
         {
             key : 'position',
