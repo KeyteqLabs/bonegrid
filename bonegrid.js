@@ -320,7 +320,7 @@ Bonegrid = {};
         {
             // Calculate distance left before scrollbar hits the bottom
             var distance = this.$('table').height() - (this.el.height() + this.el.scrollTop());
-            if (distance <= parseInt(this.el.height() / 10), 10)
+            if (distance <= parseInt(this.el.height() / 10, 10))
                 this.proxy.range(this.showing);
         },
 
