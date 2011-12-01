@@ -52,7 +52,7 @@ It has hooks for handling how the grid is rendered:
     The name to use when rendering the column header.
 
  * **cell**
-    Use to specify what Backone.View to use for rendering this cell type
+    Use to specify overrides for rendering the `Bonegrid.Cell` of the current column
     
     * **view**
         Specify your own Bonegrid.View to handle rendering of each cell
@@ -60,7 +60,7 @@ It has hooks for handling how the grid is rendered:
         Specify what html class to set on each cell
 
  * **header**
-    Can be used to specify what Backbone.View to use for rendering the column header
+    Use to specify overrides for rendering the `Bonegrid.Header` view
 
     * **view**
         Specify your own Bonegrid.View to handle rendering of each cell
