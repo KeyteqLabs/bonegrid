@@ -438,22 +438,19 @@ Bonegrid = {};
         current : {
             start : 0
         },
-        _settings : {
-            body : {
-                on : true,
-                autosize : true
-            },
-            header : {
-                on : true,
-                autosize : false
-            }
+        _settings : {},
+
+        // Sets a number of defaults values for a grid
+        setDefaults : function()
+        {
+            this._settings = {
+                body : {on : true, autosize : true},
+                header : {on : true, autosize : false}
+            };
         },
 
         settings : function(scope, settings) {
-            if (settings) {
-                _.extend(this._settings[scope], settings);
-            }
-            return this._settings[scope];
+            return _.extend(this._settings[scope], (settings || {}));
         },
 
         initialize : function(options)
@@ -461,6 +458,8 @@ Bonegrid = {};
             options = (options || {});
 
             _.bindAll(this, 'render', 'columnize', 'onAdd', 'createBody');
+
+            this.setDefaults();
 
             var key;
             for (key in this.options)
