@@ -94,7 +94,7 @@ Bonegrid = {};
         setLimit : function(limit) {
             this._limit = limit;
         }
-    }); 
+    });
     Bonegrid.View = Backbone.View.extend({
         _view : {},
         view : function(scope, data) {
@@ -397,10 +397,12 @@ Bonegrid = {};
         // Should be optimized
         autosize : function()
         {
+            // Find border sizes
+            var hasHeight = parseInt(this.el.outerHeight() - this.el.height());
             var height = parseInt(this.fill.height() - (this.el.offset().top - this.fill.offset().top), 10);
             this.el.css({
                 overflow : 'auto',
-                height : height,
+                height : height - hasHeight,
                 '-webkit-overflow-scrolling': 'touch'
             });
 
@@ -588,5 +590,5 @@ Bonegrid = {};
                 this.current.header.resizeLike(cells);
             }
         }
-    }); 
+    });
 }).call(this);
