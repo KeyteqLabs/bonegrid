@@ -576,6 +576,12 @@ Bonegrid = {};
             if (this.options.data.length > 0)
                 this.collection.reset(this.options.data);
 
+            /**
+             * Trigger the proxy reset to render a if a collection with elements exists
+             */
+            if (this.collection.length)
+                this.proxy.trigger('reset', this.collection);
+            
             // Make chainable
             return this;
         },
