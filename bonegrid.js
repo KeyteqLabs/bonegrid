@@ -130,9 +130,8 @@ Bonegrid = {};
         },
         render : function()
         {
-            this.el = $(this.el);
             var value = this.model.get(this.options.key);
-            this.el.text(value);
+            this.$el.text(value);
             return this;
         }
     });
@@ -153,9 +152,8 @@ Bonegrid = {};
 
         render : function()
         {
-            this.el = $(this.el);
-            this.el.attr('id', this.model.cid);
-            var row = this.el, cell, render;
+            this.$el.attr('id', this.model.cid);
+            var row = this.$el, cell, render;
 
             var conf;
             _(this.columns).each(function(col, key) {
@@ -184,8 +182,7 @@ Bonegrid = {};
         },
 
         render : function() {
-            this.el = $(this.el);
-            this.el.html(
+            this.$el.html(
                 this.make('a', {'class':'sort-asc'}, this.options.name)
             );
             return this;
@@ -225,7 +222,7 @@ Bonegrid = {};
             this.proxy.bind('render', this.onRender);
         },
         render : function() {
-            this.el = $(this.el).html($(this.tmpl));
+            this.$el.html($(this.tmpl));
 
             _(this.columns).each(function(col, key) {
                 // Make sure we pass on the EventProxy in the column header options
@@ -245,7 +242,7 @@ Bonegrid = {};
         onRender : function(component, data) {
             if (component === 'body' && data && data.hasOwnProperty('cells')) {
                 _(data.cells).each(function(cell, key) {
-                    this.cells[key].el.css('width', cell);
+                    this.cells[key].$el.css('width', cell);
                 }, this);
             }
         }
@@ -310,8 +307,6 @@ Bonegrid = {};
                     this.delegateEvents({'scroll' : 'pager'});
             }
 
-            this.el = $(this.el);
-
             // Make chainable
             return this;
         },
@@ -319,15 +314,15 @@ Bonegrid = {};
         pager : function(e)
         {
             // Calculate distance left before scrollbar hits the bottom
-            var distance = this.$('table').height() - (this.el.height() + this.el.scrollTop());
-            if (distance <= parseInt(this.el.height() / 10, 10))
+            var distance = this.$('table').height() - (this.$el.height() + this.$el.scrollTop());
+            if (distance <= parseInt(this.$el.height() / 10, 10))
                 this.proxy.range(this.showing);
         },
 
         // Initially just fill with an empty table
         render : function() {
             // Ensure `el` always is a jQuery element
-            this.el.html($(this.tmpl));
+            this.$el.html($(this.tmpl));
             this.container = this.$('tbody');
             this.proxy.trigger('render', 'body', {cells:this.cellWidths()});
             return this;
@@ -374,7 +369,7 @@ Bonegrid = {};
         {
             if (this._rows.length > 0) {
                 var model = this._rows.at(0);
-                return model.view.el.height();
+                return model.view.$el.height();
             }
             else
                 return 25;
@@ -385,7 +380,7 @@ Bonegrid = {};
             if (this._rows.length > 0) {
                 var row = this._rows.at(0);
                 return _(row.view.cells).map(function(cell) {
-                    return cell.el.width();
+                    return cell.$el.width();
                 });
             }
             return false;
@@ -398,9 +393,9 @@ Bonegrid = {};
         autosize : function()
         {
             // Find border sizes
-            var hasHeight = parseInt(this.el.outerHeight() - this.el.height());
-            var height = parseInt(this.fill.height() - (this.el.offset().top - this.fill.offset().top), 10);
-            this.el.css({
+            var hasHeight = parseInt(this.$el.outerHeight() - this.$el.height());
+            var height = parseInt(this.fill.height() - (this.$el.offset().top - this.fill.offset().top), 10);
+            this.$el.css({
                 overflow : 'auto',
                 height : height - hasHeight,
                 '-webkit-overflow-scrolling': 'touch'
@@ -408,7 +403,7 @@ Bonegrid = {};
 
             // Figure out how many rows I can contain in viewport
             var rowHeight = this.rowHeight();
-            this.options.limit = Math.round(this.el.height() / rowHeight);
+            this.options.limit = Math.round(this.$el.height() / rowHeight);
             return this;
         },
 
@@ -547,10 +542,10 @@ Bonegrid = {};
         render : function()
         {
             // Always use the bonegrid class for CSS hooks
-            this.el.addClass('bonegrid');
+            this.$el.addClass('bonegrid');
 
             // Render Bonegrid.Body onto Grid
-            this.el.append(this.current.body.el);
+            this.$el.append(this.current.body.el);
 
 
             // Prepend header element if header is turned on
@@ -560,7 +555,7 @@ Bonegrid = {};
                     columns : this.columns,
                     proxy : this.proxy
                 });
-                this.el.prepend(this.current.header.el);
+                this.$el.prepend(this.current.header.el);
             }
 
             // Header should render first as body size is calculated given it
@@ -591,7 +586,7 @@ Bonegrid = {};
         {
             if (this.current.hasOwnProperty('header') && this.settings('header').autosize) {
                 var cells = _(row.view.cells).map(function(cell) {
-                    return cell.el.width();
+                    return cell.$el.width();
                 });
                 this.current.header.resizeLike(cells);
             }
