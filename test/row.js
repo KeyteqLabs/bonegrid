@@ -25,8 +25,8 @@ describe('Bonegrid.Row', function() {
         });
 
         it('produces correct markup', function() {
-            var elems = this.row.render().el[0].childNodes;
-            expect(this.row.el[0].tagName.toLowerCase()).toBe(this.row.tagName);
+            var elems = this.row.render().el.childNodes;
+            expect(this.row.el.tagName.toLowerCase()).toBe(this.row.tagName);
             expect(elems.length).toEqual(this.row.cells.length);
             for (var i = 0; i < this.columns.length; i++) {
                 expect(elems[i].tagName.toLowerCase()).toBe(this.row.cells[i].tagName);

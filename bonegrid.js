@@ -42,8 +42,8 @@ Bonegrid = {};
             }
         },
 
-        sort : function(options) {
-            var proxy = this;
+        sort : function(options)
+        {
             var data = this.collection.sortBy(function(model) {
                 return model.get(options.key);
             });
@@ -79,7 +79,7 @@ Bonegrid = {};
     });
 
     Bonegrid.Collection = Backbone.Collection.extend({
-        criteria : new Backbone.Model,
+        criteria : new Backbone.Model(),
         _limit : 10,
         getRange : function(start, end) {
             end = (end || this._limit);
@@ -248,12 +248,14 @@ Bonegrid = {};
         }
     });
 
-    Bonegrid.Body = Bonegrid.View.extend({
+    Bonegrid.Body = Bonegrid.View.extend(
+    {
         _rows : null,
         _view : {
             header : Bonegrid.Header,
             row : Bonegrid.Row
         },
+
         fill : false,
         showing : 0,
         tmpl : '<table><tbody></tbody></table>',
@@ -269,7 +271,8 @@ Bonegrid = {};
         // Cached container node
         container : null,
 
-        initialize : function(options) {
+        initialize : function(options)
+        {
             options = (options || {});
 
             // Require a proxy object
@@ -320,11 +323,13 @@ Bonegrid = {};
         },
 
         // Initially just fill with an empty table
-        render : function() {
+        render : function()
+        {
             // Ensure `el` always is a jQuery element
             this.$el.html($(this.tmpl));
             this.container = this.$('tbody');
             this.proxy.trigger('render', 'body', {cells:this.cellWidths()});
+
             return this;
         },
 
@@ -393,7 +398,7 @@ Bonegrid = {};
         autosize : function()
         {
             // Find border sizes
-            var hasHeight = parseInt(this.$el.outerHeight() - this.$el.height());
+            var hasHeight = parseInt(this.$el.outerHeight() - this.$el.height(), 10);
             var height = parseInt(this.fill.height() - (this.$el.offset().top - this.fill.offset().top), 10);
             this.$el.css({
                 overflow : 'auto',
@@ -432,7 +437,8 @@ Bonegrid = {};
             limit : 50,
             start : 0
         },
-        current : {
+        current :
+        {
             start : 0
         },
         _settings : {},
@@ -446,7 +452,8 @@ Bonegrid = {};
             };
         },
 
-        settings : function(scope, settings) {
+        settings : function(scope, settings)
+        {
             return _.extend(this._settings[scope], (settings || {}));
         },
 
@@ -498,13 +505,16 @@ Bonegrid = {};
         createBody : function()
         {
             options = this.settings('body');
-            _.defaults(options, {
+
+            _.defaults(options,
+            {
                 proxy : this.proxy,
                 columns : this.columns
             });
 
             // Update reference to current body and return it
             this.current.body = this.view('body', options);
+
             return this.current.body;
         },
 
@@ -512,28 +522,36 @@ Bonegrid = {};
         // models attribute names
         columnize : function(columns, collection)
         {
-            if (!columns) {
-                if (collection.length > 0) {
-                    var keys =  _(collection.at(0).attributes).keys();
-                    columns = _(keys).map(function(key) {
-                        return { id : key, name : key };
-                    });
-                }
+            if (!columns && collection.length > 0)
+            {
+                var keys =  _(collection.at(0).attributes).keys();
+                columns = _(keys).map(function(key)
+                {
+                    return { id : key, name : key };
+                });
             }
+
             var cell, header;
-            return _(columns).map(function(col) {
+            return _(columns).map(function(col)
+            {
                 cell = {};
                 header = {};
-                if (col.hasOwnProperty('cell')) {
+
+                if (col.hasOwnProperty('cell'))
+                {
                     cell = col.cell;
                     delete col.cell;
                 }
-                if (col.hasOwnProperty('header')) {
+
+                if (col.hasOwnProperty('header'))
+                {
                     header = col.header;
                     delete col.header;
                 }
+
                 _.defaults(cell, col);
                 _.defaults(header, col);
+
                 return {cell : cell, header : header};
             });
         },
@@ -546,7 +564,6 @@ Bonegrid = {};
 
             // Render Bonegrid.Body onto Grid
             this.$el.append(this.current.body.el);
-
 
             // Prepend header element if header is turned on
             var header = this.settings('header');
@@ -576,7 +593,7 @@ Bonegrid = {};
              */
             if (this.collection.length)
                 this.proxy.trigger('reset', this.collection);
-            
+
             // Make chainable
             return this;
         },
