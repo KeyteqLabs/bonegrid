@@ -164,12 +164,44 @@ Bonegrid = {};
 
         initialize : function(options)
         {
-            _.bindAll(this, 'render', 'remove');
+            _.bindAll(this, 'render', 'remove', 'onChange');
 
             this.model = options.model;
 
             this.columns = options.columns;
             this.proxy = options.proxy;
+
+            this.model.bind('remove', this.remove);
+            this.model.bind('change', this.onChange);
+        },
+
+        onChange : function(className, toggle)
+        {
+            this.$el.toggleClass(this.model.get('activeClass'), this.model.get('selected'));
+
+            if (this.model.has('actionState'))
+            {
+                var actionState = this.model.get('actionState');
+
+                if (actionState.hasOwnProperty('className') && actionState.hasOwnProperty('active'))
+                    this.$el.toggleClass(actionState.className, actionState.active);
+            }
+        },
+
+        validPermissions : function(column)
+        {
+            var valid = true;
+
+            if ('cell' in column)
+            {
+                _(column.cell.requiredPermissions).each(function(permission)
+                {
+                    if (!this.model.has(permission) || this.model.get(permission) === false)
+                        valid = false;
+                }, this);
+            }
+
+            return valid;
         },
 
         render : function()
@@ -177,16 +209,21 @@ Bonegrid = {};
             this.$el.attr('id', this.model.cid);
 
             var row = this.$el, cell, render;
+            row.html('');
 
             var conf;
 
             _(this.columns).each(function(col, key)
             {
                 // Append model and position to options sent to Bonegrid.Row
-                conf = {proxy:this.proxy};
-                _.defaults(conf, col.cell, {model:this.model,position:key});
-                this.cells[key] = this.view('cell', conf);
-                row.append(this.cells[key].render().el);
+                conf = {proxy : this.proxy, disabled : !this.validPermissions(col)};
+
+                _.defaults(conf, col.cell, {model : this.model, position : key});
+
+                var cellView = this.view('cell', conf);
+                row.append(cellView.el);
+                cellView.render();
+                this.cells[key] = cellView;
             }, this);
 
             return this;
@@ -200,7 +237,9 @@ Bonegrid = {};
         model : false,
         asc : true,
         proxy : null,
-        events : {
+        performRender : true,
+        events :
+        {
             'click a' : 'sort'
         },
 
@@ -208,12 +247,16 @@ Bonegrid = {};
 
             if (!options.hasOwnProperty('proxy')) throw 'Bonegrid.HeaderCell requires EventProxy';
             this.proxy = options.proxy;
+
+            if (options.hasOwnProperty('render'))
+                this.performRender = options.render;
         },
 
-        render : function() {
-            this.$el.html(
-                this.make('a', {'class':'sort-asc'}, this.options.name)
-            );
+        render : function()
+        {
+            if (this.performRender === true)
+                this.$el.html(this.make('a', {'class':'sort-asc'}, this.options.name));
+
             return this;
         },
 
@@ -226,6 +269,91 @@ Bonegrid = {};
                 direction : ((this.asc) ? 'asc' : 'desc'),
                 key : this.options.key
             });
+        }
+    });
+
+    Bonegrid.Action = Bonegrid.View.extend(
+    {
+        tagName : 'li',
+        className : 'actionElement',
+        callback : null,
+        actionTag : 'button',
+        actionClass : 'gridAction',
+        displayName : null,
+        requiresSelectedModel : false,
+
+        initialize : function(options)
+        {
+            _.bindAll(this, 'render', 'onSelectionChanged');
+            _.extend(this, options);
+
+            if (this.requiresSelectedModel === true)
+                this.proxy.collection.bind('row:selectedCount', this.onSelectionChanged);
+        },
+
+        onSelectionChanged : function(count)
+        {
+            var tagElement = this.$(this.actionTag);
+
+            if (count === 0)
+                tagElement.hide();
+            else
+                tagElement.show();
+        },
+
+        events : function()
+        {
+            if (this.callback !== null)
+            {
+                var events = [];
+                events['click .' + this.actionClass] = this.callback;
+
+                return events;
+            }
+        },
+
+        render : function()
+        {
+            var actionObject = this.make(this.actionTag, {'class' : this.actionClass}, this.displayName);
+
+            this.$el.append(actionObject);
+            this.delegateEvents();
+
+            if (this.requiresSelectedModel)
+                this.$(this.actionTag).hide();
+
+            return this;
+        }
+    });
+
+    Bonegrid.Actions = Bonegrid.View.extend(
+    {
+        actions : null,
+        tagName : 'section',
+        className : 'bonegrid-actions',
+        tmpl : '<ul></ul>',
+
+        initialize : function(options)
+        {
+            if (options.hasOwnProperty('actions'))
+                this.actions = options.actions;
+            if (options.hasOwnProperty('proxy'))
+                this.proxy = options.proxy;
+        },
+
+        render : function()
+        {
+            if (this.actions !== null)
+            {
+                var ul = $(this.tmpl);
+
+               _(this.actions).each(function(action)
+               {
+                   ul.append(action.render().el);
+               }, this);
+
+                this.$el.append(ul);
+            }
         }
     });
 
@@ -314,7 +442,7 @@ Bonegrid = {};
             this._rows = new Backbone.Collection();
 
             // Bind methods to this
-            _.bindAll(this, 'render', 'addRow', 'reset', 'removeRow', 'row', 'cellWidths', 'autosize');
+            _.bindAll(this, 'render', 'addRow', 'reset', 'removeRow', 'row', 'cellWidths', 'autosize', 'checkRenderDefaultRow');
 
             // Take column definitions
             if (options.hasOwnProperty('columns')) this.columns = options.columns;
@@ -323,6 +451,7 @@ Bonegrid = {};
             this.proxy.bind('reset', this.reset);
             this.proxy.bind('add', this.addRow);
             this.proxy.bind('rm', this.removeRow);
+            this.proxy.collection.bind('fetch:complete remove', this.checkRenderDefaultRow);
 
             // When an element to fill has been sent, hook into the proxy
             // render event to ensure we always still fill the container
@@ -374,28 +503,61 @@ Bonegrid = {};
             model.view.remove();
             this._rows.remove(model);
         },
+
         reset : function(collection)
         {
             this.container.html('');
             this.showing = 0;
-            collection.each(function(model) {
+
+            collection.each(function(model)
+            {
                 this.addRow(model);
             }, this);
         },
 
-        addRow : function(model)
+        checkRenderDefaultRow : function()
         {
-            var row = this.view('row', {
+            var collection = this.proxy.collection;
+
+            if (collection.models.length > 0)
+                return;
+
+            if (collection.defaultRow === null)
+                return;
+
+            var defaultRow = collection.defaultRow;
+
+            if (defaultRow.hasOwnProperty('template'))
+                this.container.append($(defaultRow.template).tmpl());
+
+            if (defaultRow.hasOwnProperty('rowClassName'))
+                this.$('tr').addClass(defaultRow.rowClassName);
+        },
+
+        addRow : function(model, collection, options)
+        {
+            options = options || ({});
+            var row = this.view('row',
+            {
                 model : model,
                 columns : this.columns,
                 proxy : this.proxy
             });
+
             model.view = row;
-            if (!this._rows.getByCid(model.cid))
+
+            if (!(this._rows._byCid[model.cid] || this._rows._byId[model.id]))
                 this._rows.add(model);
 
-            this.container.append(row.render().el);
+            var rowElement = row.render().el, newIndex = options.index;
+
+            if (this.container.children('tr').length === 0 || options.index === 0)
+                this.container.prepend(rowElement);
+            else
+               this.container.children('tr').eq(newIndex - 1).after(rowElement);
+
             this.showing++;
+
             // TODO This will be called _a lot_, up for improvement
             this.proxy.trigger('render', 'body', this.cellWidths());
             return row;
@@ -453,12 +615,16 @@ Bonegrid = {};
     {
         collection : null,
         columns : [],
-        _view : {
+        actions : null,
+        _view :
+        {
             body : Bonegrid.Body,
             collection : Bonegrid.Collection,
             row : Bonegrid.Row,
             cell : Bonegrid.Cell,
             header : Bonegrid.Header,
+            actions : Bonegrid.Actions,
+            action : Bonegrid.Action,
             footer : false
         },
         options :
@@ -479,9 +645,11 @@ Bonegrid = {};
         // Sets a number of defaults values for a grid
         setDefaults : function()
         {
-            this._settings = {
+            this._settings =
+            {
                 body : {on : true, autosize : true},
-                header : {on : true, autosize : false}
+                header : {on : true, autosize : false},
+                actions : {on : false, autosize : false}
             };
         },
 
@@ -507,6 +675,7 @@ Bonegrid = {};
 
             if (options.hasOwnProperty('body')) this.settings('body', options.body);
             if (options.hasOwnProperty('header')) this.settings('header', options.header);
+            if (options.hasOwnProperty('actions')) this.settings('actions', options.actions);
             if (options.hasOwnProperty('collection')) this._view.collection = options.collection;
 
             if (options.hasOwnProperty('fill'))
@@ -525,8 +694,18 @@ Bonegrid = {};
                 collection : this.collection
             });
 
-            this.columns = (options.hasOwnProperty('columns'))
-                ? this.columnize(options.columns) : this.columnize(null, this.collection);
+            if (options.hasOwnProperty('actionDefinitions'))
+            {
+                this.actions = [];
+                _(options.actionDefinitions).each(function(actionDefinition)
+                {
+                    actionDefinition.proxy = this.proxy;
+                    this.actions.push(this.view('action', actionDefinition));
+                }, this);
+            }
+
+            this.columns = (options.hasOwnProperty('columns')) ?
+                this.columnize(options.columns) : this.columnize(null, this.collection);
 
             this.createBody();
             this.proxy.bind('add', this.onAdd);
@@ -607,6 +786,18 @@ Bonegrid = {};
                 });
                 this.$el.prepend(this.current.header.el);
             }
+
+            // Prepend actions element if actions is turned on
+            var actions = this.settings('actions');
+            if (actions.on)
+            {
+                this.current.actions = this.view('actions', {actions : this.actions, proxy : this.proxy});
+                this.$el.prepend(this.current.actions.el);
+            }
+
+            // Rendered before body because of autosize-calculation
+            if (this.current.actions)
+                this.current.actions.render();
 
             // Header should render first as body size is calculated given it
             if (this.current.header)
