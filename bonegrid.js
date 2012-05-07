@@ -104,48 +104,70 @@ Bonegrid = {};
             return new use(data);
         }
     });
-    Bonegrid.Cell = Bonegrid.View.extend({
+
+    Bonegrid.Cell = Bonegrid.View.extend(
+    {
         tagName : 'td',
         className : 'bonegrid-cell',
         model : null,
         proxy : null,
-        options : {
+        options :
+        {
             name : false,
             key : false
         },
+
         initialize : function(options)
         {
+            _.bindAll(this, 'render');
+
             options = options || ({});
+
             if (this.model === null && !options.hasOwnProperty('model'))
                 throw 'Model missing';
+
             this.model = options.model;
+            this.model.bind('change', this.render);
+
             this.proxy = options.proxy;
+
             var option;
-            for (option in options) {
-                if (options.hasOwnProperty(option)) {
+
+            for (option in options)
+            {
+                if (options.hasOwnProperty(option))
+                {
                     if (this.options.hasOwnProperty(option))
                         this.options[option] = options[option];
                 }
             }
         },
+
         render : function()
         {
             var value = this.model.get(this.options.key);
             this.$el.text(value);
+
             return this;
         }
     });
-    Bonegrid.Row = Bonegrid.View.extend({
+
+    Bonegrid.Row = Bonegrid.View.extend(
+    {
         tagName : 'tr',
         cells : [],
 
-        _view : {
+        _view :
+        {
             cell : Bonegrid.Cell
         },
 
         initialize : function(options)
         {
+            _.bindAll(this, 'render', 'remove');
+
             this.model = options.model;
+
             this.columns = options.columns;
             this.proxy = options.proxy;
         },
@@ -153,20 +175,26 @@ Bonegrid = {};
         render : function()
         {
             this.$el.attr('id', this.model.cid);
+
             var row = this.$el, cell, render;
 
             var conf;
-            _(this.columns).each(function(col, key) {
+
+            _(this.columns).each(function(col, key)
+            {
                 // Append model and position to options sent to Bonegrid.Row
                 conf = {proxy:this.proxy};
                 _.defaults(conf, col.cell, {model:this.model,position:key});
                 this.cells[key] = this.view('cell', conf);
                 row.append(this.cells[key].render().el);
             }, this);
+
             return this;
         }
     });
-    Bonegrid.HeaderCell = Bonegrid.Cell.extend({
+
+    Bonegrid.HeaderCell = Bonegrid.Cell.extend(
+    {
         tagName : 'th',
         className : 'sort-asc',
         model : false,
@@ -177,6 +205,7 @@ Bonegrid = {};
         },
 
         initialize : function(options) {
+
             if (!options.hasOwnProperty('proxy')) throw 'Bonegrid.HeaderCell requires EventProxy';
             this.proxy = options.proxy;
         },
@@ -189,9 +218,11 @@ Bonegrid = {};
         },
 
         // Handle sort event triggering
-        sort : function(e) {
+        sort : function(e)
+        {
             this.asc = !this.asc;
-            this.proxy.sort({
+            this.proxy.sort(
+            {
                 direction : ((this.asc) ? 'asc' : 'desc'),
                 key : this.options.key
             });
@@ -418,7 +449,8 @@ Bonegrid = {};
         }
     });
 
-    Bonegrid.Grid = Bonegrid.View.extend({
+    Bonegrid.Grid = Bonegrid.View.extend(
+    {
         collection : null,
         columns : [],
         _view : {
@@ -429,7 +461,8 @@ Bonegrid = {};
             header : Bonegrid.Header,
             footer : false
         },
-        options : {
+        options :
+        {
             footer : false,
             fill : false,
             criteria : {},
