@@ -418,7 +418,7 @@ Bonegrid = {};
         fill : false,
         showing : 0,
         tmpl : '<table><tbody></tbody></table>',
-        tagName : 'section',
+        tagName : 'div',
         className : 'bonegrid-body',
 
         // Will hold a Bonegrid.Collection
