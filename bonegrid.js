@@ -439,6 +439,7 @@ Bonegrid = {};
                 throw 'Bonegrid.Body requires proxy';
             this.proxy = options.proxy;
 
+            // Will hold the actual view objects, not row data
             this._rows = new Backbone.Collection();
 
             // Bind methods to this
@@ -485,11 +486,9 @@ Bonegrid = {};
         // Initially just fill with an empty table
         render : function()
         {
-            // Ensure `el` always is a jQuery element
             this.$el.html($(this.tmpl));
             this.container = this.$('tbody');
             this.proxy.trigger('render', 'body', {cells:this.cellWidths()});
-
             return this;
         },
 
@@ -508,10 +507,9 @@ Bonegrid = {};
         {
             this.container.html('');
             this.showing = 0;
-
-            collection.each(function(model)
+            collection.each(function(model, index, collection)
             {
-                this.addRow(model);
+                this.addRow(model, collection, {index:index});
             }, this);
         },
 
