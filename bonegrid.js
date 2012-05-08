@@ -422,7 +422,7 @@ Bonegrid = {};
         className : 'bonegrid-body',
 
         // Will hold a Bonegrid.Collection
-        proxy : {},
+        proxy : null,
 
         // Array of column definition data
         columns : [],
@@ -449,9 +449,10 @@ Bonegrid = {};
             if (options.hasOwnProperty('columns')) this.columns = options.columns;
 
             // Bind to proxy methods for updating the content
-            this.proxy.bind('reset', this.reset);
-            this.proxy.bind('add', this.addRow);
-            this.proxy.bind('rm', this.removeRow);
+            this.proxy.on('reset', this.reset);
+            this.proxy.on('add', this.addRow);
+            this.proxy.on('rm', this.removeRow);
+            // TODO Should be handled in reset/addRow/removeRow instead of a new binding?
             this.proxy.collection.bind('fetch:complete remove', this.checkRenderDefaultRow);
 
             // When an element to fill has been sent, hook into the proxy
@@ -460,15 +461,13 @@ Bonegrid = {};
             if (options.hasOwnProperty('fill'))
             {
                 this.fill = options.fill;
-                this.proxy.bind('render', this.autosize);
-                this.proxy.bind('resize', this.autosize);
+                this.proxy.on('render resize', this.autosize);
             }
 
             // Use scroll based paging if set
-            if (options.hasOwnProperty('pager'))
+            if (options.hasOwnProperty('pager') && options.pager == 'scroll')
             {
-                if (options.pager === 'scroll')
-                    this.delegateEvents({'scroll' : 'pager'});
+                this.delegateEvents({'scroll' : 'pager'});
             }
 
             // Make chainable
@@ -517,10 +516,7 @@ Bonegrid = {};
         {
             var collection = this.proxy.collection;
 
-            if (collection.models.length > 0)
-                return;
-
-            if (collection.defaultRow === null)
+            if (collection.models.length > 0 || collection.defaultRow === null)
                 return;
 
             var defaultRow = collection.defaultRow;
@@ -809,11 +805,8 @@ Bonegrid = {};
             // make sure to call `Bonegrid.Collection#getRange`
             if (this.options.data.length > 0)
                 this.collection.reset(this.options.data);
-
-            /**
-             * Trigger the proxy reset to render a if a collection with elements exists
-             */
-            if (this.collection.length)
+            // Trigger the proxy reset to render a if a collection with elements exists
+            else if (this.collection.length)
                 this.proxy.trigger('reset', this.collection);
 
             // Make chainable
