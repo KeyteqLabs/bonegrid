@@ -465,12 +465,9 @@ Bonegrid = {};
             }
 
             // Use scroll based paging if set
-            if (options.hasOwnProperty('pager') && options.pager == 'scroll')
-            {
+            if (options.hasOwnProperty('pager') && options.pager === 'scroll')
                 this.delegateEvents({'scroll' : 'pager'});
-            }
 
-            // Make chainable
             return this;
         },
 
